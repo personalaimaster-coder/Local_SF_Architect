@@ -1,0 +1,21 @@
+# Curated Salesforce governor limits by API version.
+# Compiled into SQLite by engines/limits.py (Phase 1.4).
+#
+# last_verified: 2026-06-01
+
+api_versions:
+  v62.0:
+    last_verified: "2026-06-01"
+    limits:
+      soql_query_rows:
+        description: Maximum SOQL query rows returned per transaction
+        value: 50000
+        unit: rows
+      heap_size:
+        description: Maximum heap size per Apex transaction
+        value: 6000000
+        unit: bytes
+      dml_rows:
+        description: Maximum DML rows per transaction
+        value: 10000
+        unit: rows
