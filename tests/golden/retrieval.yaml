@@ -1,0 +1,115 @@
+# Retrieval golden set (plan Phase 1 task 6, Gap 4).
+# A living, labeled set of question -> expected pattern/source used by
+# tests/test_golden.py to assert retrieval quality has ground truth.
+#
+# Coverage: 18 primary cases — one per pattern heading in data/patterns_seed.yaml —
+# plus 4 alternate-phrasing cases that test retrieval robustness. Total: 22 cases.
+#
+# Rules:
+#   - `expected_heading` MUST match a `heading` field in data/patterns_seed.yaml.
+#   - Questions are phrased as a developer/architect would naturally ask them,
+#     NOT copied verbatim from the pattern text (tests genuine semantic search).
+#   - Add entries here whenever a new pattern is added to patterns_seed.yaml.
+#
+# Pillar breakdown: Security(5) + Reliability(5) + Scalability(5) + Performance(3)
+# + 4 alternate phrasings = 22 total cases.
+
+cases:
+
+  # ── Scalability ─────────────────────────────────────────────────────────────
+
+  - question: "How do I keep Apex safe when processing many records at high volume?"
+    expected_heading: "Bulkification"
+    expected_pillar: Scalability
+
+  - question: "Should I have multiple triggers on the same object?"
+    expected_heading: "One Trigger Per Object"
+    expected_pillar: Scalability
+
+  - question: "Why does my trigger fail when 200 records are inserted at once?"
+    expected_heading: "Avoid SOQL and DML in Loops"
+    expected_pillar: Scalability
+
+  - question: "What causes row-level locking errors during bulk data loads on child records?"
+    expected_heading: "Data Skew Prevention"
+    expected_pillar: Scalability
+
+  - question: "How do I avoid running the same SOQL query multiple times inside a loop?"
+    expected_heading: "Map-Based SOQL Query Consolidation"
+    expected_pillar: Scalability
+
+  # ── Security ────────────────────────────────────────────────────────────────
+
+  - question: "How do I enforce field and object level security in Apex?"
+    expected_heading: "CRUD and FLS Enforcement"
+    expected_pillar: Security
+
+  - question: "What sharing keyword should I use on an Apex class that queries records?"
+    expected_heading: "Apex Sharing Keywords"
+    expected_pillar: Security
+
+  - question: "How do I apply the principle of least privilege to Salesforce user access?"
+    expected_heading: "Principle of Least Privilege"
+    expected_pillar: Security
+
+  - question: "How should I store API credentials and OAuth tokens for callouts?"
+    expected_heading: "Named Credentials for Callouts"
+    expected_pillar: Security
+
+  - question: "How do I set up a secure data model using org-wide defaults?"
+    expected_heading: "Org-Wide Defaults and Sharing Model"
+    expected_pillar: Security
+
+  # ── Reliability ─────────────────────────────────────────────────────────────
+
+  - question: "How do I make external integration callouts reliable and avoid duplicates?"
+    expected_heading: "Idempotent Integration Callouts"
+    expected_pillar: Reliability
+
+  - question: "When should I use Queueable Apex instead of a future method?"
+    expected_heading: "Queueable Apex for Async Work"
+    expected_pillar: Reliability
+
+  - question: "How do I decouple two Salesforce systems so they don't depend on each other?"
+    expected_heading: "Platform Events for Loose Coupling"
+    expected_pillar: Reliability
+
+  - question: "How should I handle partial failures when inserting a large list of records?"
+    expected_heading: "Apex Error Handling and Partial Success"
+    expected_pillar: Reliability
+
+  - question: "How do I validate that my Salesforce architecture can handle production data volumes?"
+    expected_heading: "Scale Testing and Availability Design"
+    expected_pillar: Reliability
+
+  # ── Performance ─────────────────────────────────────────────────────────────
+
+  - question: "How can I cache hot read-mostly data to improve performance?"
+    expected_heading: "Platform Caching"
+    expected_pillar: Performance
+
+  - question: "How do I write SOQL queries that don't time out on large objects?"
+    expected_heading: "Selective SOQL Queries"
+    expected_pillar: Performance
+
+  - question: "My synchronous Apex hits the CPU limit — how do I fix it?"
+    expected_heading: "Asynchronous Apex for Heavy Work"
+    expected_pillar: Performance
+
+  # ── Alternate phrasings (test retrieval robustness) ──────────────────────────
+
+  - question: "Governor limit error: too many SOQL queries 101 in my trigger"
+    expected_heading: "Avoid SOQL and DML in Loops"
+    expected_pillar: Scalability
+
+  - question: "Best practice for Apex trigger design in Salesforce"
+    expected_heading: "One Trigger Per Object"
+    expected_pillar: Scalability
+
+  - question: "How do I prevent sensitive field exposure when my Apex class calls a query?"
+    expected_heading: "CRUD and FLS Enforcement"
+    expected_pillar: Security
+
+  - question: "I need to run a large batch job that processes millions of records nightly"
+    expected_heading: "Asynchronous Apex for Heavy Work"
+    expected_pillar: Performance

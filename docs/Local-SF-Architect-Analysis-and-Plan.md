@@ -2,7 +2,9 @@
 
 > A review of the v3 "Unified Body Anatomy" blueprint, written in plain English, with a verified gap analysis and a phased, step-by-step build plan.
 >
-> Status: planning document only. Nothing has been implemented yet.
+> Status: Phase 1 scaffold exists and is pushed to GitHub (`personalaimaster-coder/Local_SF_Architect`). The package skeleton, `health_echo` MCP tool, CLI (`doctor`), and a seed limits file are in place; no engine logic is implemented yet. See Section 15 for the precise current state.
+>
+> Build-spec sections (11–16) were added after the original analysis to make this document directly buildable: tool/API contracts, data-model schemas, a gap-integrated roadmap, acceptance criteria, current status, and open decisions.
 
 ---
 
@@ -50,6 +52,8 @@ How the pieces talk. The IDE sends a request → the local server runs the right
 - `generate_architecture_diagram(layout_json, tool)` — produce a diagram.
 
 It also describes the **ingestion pipeline**: scrape → clean to markdown → split by headings → embed → store with metadata.
+
+> Note: this is only a partial list. The complete, authoritative tool surface (with input/output contracts) is consolidated in **Section 11**.
 
 ### Part 3 — The Heart (core logic)
 The "anti-hallucination" engines:
@@ -338,3 +342,219 @@ flowchart LR
 ### 10.5 Net answer
 
 Yes. The engine should — and easily can — use open-source models for every internal job (embedding, reranking, safety, tagging), all permissively licensed and laptop-runnable. The reasoning brain stays proprietary by default for quality, but can be swapped to an open-source local LLM (Qwen3 / DeepSeek-R1 via Ollama) when full sovereignty matters and the hardware allows. This also directly strengthens three earlier gaps: reranker -> confidence (Gap 2) and trust (Gap 3); injection guard -> security (Gap 5).
+
+---
+
+## 11. Tool & API contracts (authoritative)
+
+> This is the single source of truth for the MCP tool surface and CLI commands. Earlier sections (Part 2, Part 5, Part 6) reference subsets of these; this section reconciles them. Tools take and return JSON-serializable objects. Every tool returns a common envelope so the IDE can render results and confidence consistently.
+
+### 11.1 Common response envelope
+
+All MCP tools return this shape (errors included, never raise raw exceptions across the boundary):
+
+```json
+{
+  "ok": true,
+  "tool": "query_architect_db",
+  "data": { "...tool-specific...": "..." },
+  "confidence": {
+    "score": 0.0,
+    "factors": { "similarity": 0.0, "source_trust": 0, "version_match": false, "corroboration": 0 }
+  },
+  "warnings": ["string"],
+  "error": null
+}
+```
+
+- `confidence` is present only for retrieval/advice tools (Gap 2). It is omitted (null) for deterministic tools like `check_governor_limit`.
+- On failure: `ok=false`, `data=null`, `error={ "code": "STRING", "message": "human readable" }`.
+
+### 11.2 MCP tools
+
+| Tool | Input | Output (`data`) | Phase | Notes |
+|------|-------|-----------------|-------|-------|
+| `health_echo` | `message: str` | `{ "echo": str }` | 1 (done) | Liveness check. |
+| `query_architect_db` | `query: str`, `api_version?: str`, `top_k?: int = 5`, `pillar?: enum`, `maturity?: enum` | `{ "results": Pattern[] }` | 1 | Vector search + version/trust ranking. Each result includes `provenance_url`, `source_trust`, `pillar`, `maturity`, `score`. |
+| `check_governor_limit` | `scenario: { limit_key: str, projected_value: number, api_version: str }` | `{ "limit": number, "unit": str, "projected": number, "headroom": number, "breaches": bool, "last_verified": str }` | 1 | Pure math vs. seeded limits. No confidence (deterministic). |
+| `analyze_local_blast_radius` | `filepath: str`, `repo_root?: str`, `depth?: int = 2` | `{ "target": str, "immediate": Ref[], "transitive": Ref[], "unresolved": str[], "limitations": str[] }` | 2 | `unresolved`/`limitations` make dynamic-reference blind spots explicit (additional gap #2). |
+| `generate_architecture_diagram` | `layout_json: object`, `tool: enum("mermaid","drawio")` | `{ "format": str, "path": str, "content": str }` | 5 | Writes file + returns content. Figma/SVG deferred. |
+| `set_deliverable_preference` | `tool: enum("mermaid","drawio")` | `{ "deliverable_preference": str }` | 5 | Persists to `config.yaml`. |
+| `sync_latest_patterns` | `url: str`, `force?: bool = false` | `{ "ingested": int, "skipped": int, "superseded": int, "blocked": int }` | 3 | Behind `[scrape]` extra. Runs the security pipeline (Section 13) before any write; `blocked` counts injection/allowlist rejections. |
+
+`enum` types: `pillar ∈ {Security, Reliability, Scalability, Performance}`; `maturity ∈ {bleeding-edge, emerging, proven, tried-and-true}`.
+
+### 11.3 CLI commands
+
+| Command | Purpose | Phase |
+|---------|---------|-------|
+| `sf-architect --version` | Print version. | 1 (done) |
+| `sf-architect doctor` | Verify Python, data dirs, config, model cache. | 1 (done) |
+| `sf-architect seed` | (Re)load `data/limits_seed.yaml` and bundled patterns into local stores. | 1 |
+| `sf-architect lint [PATH]` | Scan metadata dir, print architectural infractions; pre-commit friendly (non-zero exit on findings). | 6 |
+| `sf-architect test` | Run tool-contract, embedding-determinism, retrieval-golden-set, and parser-fixture checks. | per Gap 4 |
+
+### 11.4 `sf-architect-mcp` (server)
+
+Starts the FastMCP server over stdio, registering all tools in 11.2 that are implemented in the current phase. Unimplemented tools are not registered (so the IDE never sees a tool that 500s).
+
+---
+
+## 12. Concrete data models (schemas)
+
+> Section 9.4 listed field *additions*; this section gives the *complete* schemas so the stores can be created directly.
+
+### 12.1 LanceDB `patterns` table
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | string (PK) | `sha1(provenance_url + heading + knowledge_version)`. |
+| `text` | string | The chunk body (markdown). |
+| `vector` | float32[384] | bge-small embedding (dim must match active model; see 12.5). |
+| `title` | string | Page/section title. |
+| `heading` | string | H2/H3 the chunk came from. |
+| `api_version` | string | e.g. `"62.0"`. |
+| `knowledge_version` | string | Release tag, e.g. `"v62"` (Gap 1). |
+| `valid_from` | string (ISO date) | (Gap 1). |
+| `valid_to` | string (ISO date, nullable) | (Gap 1). |
+| `is_current` | bool | (Gap 1). |
+| `superseded_by` | string (id, nullable) | (Gap 1). |
+| `source_type` | enum | `official_docs / architect_site / release_notes / community_blog / hand_seeded` (Gap 3). |
+| `source_trust` | int (0–100) | (Gap 3). |
+| `provenance_url` | string | (Gap 5). |
+| `scraped_at` | string (ISO ts) | (Gap 5). |
+| `sanitized` | bool | Passed injection-guard + sanitizer (Gap 5). |
+| `pillar` | enum (nullable) | Security/Reliability/Scalability/Performance. |
+| `maturity` | enum (nullable) | bleeding-edge…tried-and-true. |
+| `content_hash` | string | `sha256(text)` for dedupe + cache invalidation (Gap 6 / additional #5). |
+
+### 12.2 SQLite `limits.db`
+
+```sql
+CREATE TABLE limits (
+  api_version   TEXT NOT NULL,
+  limit_key     TEXT NOT NULL,
+  description   TEXT NOT NULL,
+  value         INTEGER NOT NULL,
+  unit          TEXT NOT NULL,
+  last_verified TEXT NOT NULL,            -- ISO date (additional gap #3)
+  PRIMARY KEY (api_version, limit_key)
+);
+```
+
+Compiled from `data/limits_seed.yaml`. The current seed has `v62.0` with `soql_query_rows`, `heap_size`, `dml_rows`.
+
+### 12.3 SQLite `audit.db`
+
+```sql
+CREATE TABLE audit_log (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  ts            TEXT NOT NULL,            -- ISO ts
+  tool          TEXT NOT NULL,
+  request_json  TEXT NOT NULL,           -- redact nothing local; never leaves machine
+  retrieved_ids TEXT,                    -- JSON array of pattern ids used
+  confidence    REAL,
+  risk_score    REAL,
+  duration_ms   INTEGER
+);
+```
+
+### 12.4 `config.yaml` (in `~/.sf-architect/`)
+
+```yaml
+deliverable_preference: mermaid          # mermaid | drawio
+embedding_model: BAAI/bge-small-en-v1.5
+reranker_enabled: false
+reranker_model: BAAI/bge-reranker-v2-m3
+source_trust:                            # per-domain overrides (Gap 3)
+  help.salesforce.com: 100
+  architect.salesforce.com: 95
+  default: 60
+scrape_allowlist:                        # P0 for Gap 5; empty = scraping disabled
+  - architect.salesforce.com
+  - help.salesforce.com
+```
+
+### 12.5 `tenant_overrides.json` (in `~/.sf-architect/`)
+
+```json
+{
+  "banned": [{ "pattern": "Platform Events", "reason": "Standardized on AWS EventBridge", "use_instead": "AWS EventBridge" }],
+  "preferred": [{ "pattern": "config over code", "weight_boost": 0.15 }]
+}
+```
+
+### 12.6 Schema/version metadata
+
+A small `meta` table (or `meta.json`) records `embedding_model`, `vector_dim`, `schema_version`, and `limits_last_verified`. On startup the server refuses to query if the configured embedding model's dimension does not match stored vectors (prevents silent corruption — cross-cutting "embedding-model versioning").
+
+---
+
+## 13. Gap-integrated roadmap (Section 6 reconciled with Section 9.3)
+
+The original phases (Section 6) are ordering by *feature layer*; the Round-2 priorities (Section 9.3) order by *risk*. They must be merged so security and versioning land before scraping. Revised build order:
+
+```mermaid
+flowchart TD
+    P1["Phase 1: MVP core loop<br/>patterns + limits + router"] --> P2["Phase 2: Repo intelligence<br/>depgraph + blast radius"]
+    P2 --> SEC["Security + Versioning gate (P0)<br/>Gap 5 sanitizer/guard + Gap 1 versioned schema"]
+    SEC --> P3["Phase 3: Scraping/ingestion<br/>ONLY after the gate"]
+    P1 --> TRUST["Trust layer (P1)<br/>Gap 3 source_trust + Gap 2 confidence + file locking"]
+    P3 --> P4["Phase 4: Persona & memory"]
+    P4 --> P5["Phase 5: Diagrams"]
+    P5 --> P6["Phase 6: Observability & lint"]
+```
+
+Hard rule (P0): **`sync_latest_patterns` must not be enabled until the Gap 5 pipeline (sanitize → injection-guard → allowlist) and the Gap 1 versioned schema exist.** The `scrape_allowlist` in `config.yaml` is empty by default, which disables scraping until explicitly configured.
+
+P1 trust items (source trust, confidence scoring, single-writer file locking, override-conflict surfacing) attach to the Phase 1 retrieval path because they shape the response envelope (Section 11.1) — better to build the envelope right the first time than retrofit it.
+
+---
+
+## 14. Definition of Done (acceptance criteria per phase)
+
+| Phase | Done when… |
+|-------|------------|
+| 1 | `query_architect_db` returns ≥1 seeded pattern offline for a known query; `check_governor_limit` correctly flags a breach and reports headroom; router constrains pattern advice with a limits check; all returned via the Section 11.1 envelope; tools callable from Cursor. |
+| 2 | `analyze_local_blast_radius` on a fixture repo returns correct immediate refs and at least 1-hop transitive refs; dynamic/unresolved references are listed in `unresolved`/`limitations`, not silently dropped; `sourceApiVersion` is read from `sfdx-project.json`. |
+| Security+Versioning gate | A page containing "ignore previous instructions" is blocked/sanitized before storage; re-scraping a changed page supersedes (not overwrites) the prior record; retrieval prefers `is_current` for the project's API version. |
+| 3 | `sync_latest_patterns` ingests an allowlisted URL, chunks by H2/H3, embeds, and writes versioned records with provenance; non-allowlisted URLs are refused. |
+| 4 | Persona files written only on explicit opt-in; tenant overrides measurably re-rank results and surface a conflict warning when a banned pattern is recommended. |
+| 5 | `generate_architecture_diagram` writes valid `.md` (Mermaid) and `.drawio` (mxGraphModel) files that open in their tools. |
+| 6 | Every tool call writes one `audit_log` row; `sf-architect lint` exits non-zero on a seeded infraction; a test asserts no outbound network calls except `sync_latest_patterns`. |
+
+---
+
+## 15. Current implementation status (repo: `Local_SF_Architect`)
+
+Phases 1 through 6.5 plus the P0 Security + Versioning gate are implemented (version `0.2.0`); the full test suite (95 tests) is green and `ruff` is clean.
+
+Implemented:
+
+- **Phase 1 — core loop:** `contracts.py` (Section 11.1 envelope), `engines/limits.py` (YAML→SQLite + `check_governor_limit`), `engines/patterns.py` (LanceDB + fastembed `bge-small`, `query_architect_db`), `engines/router.py` (limit-constrained advice), CLI `seed` + `doctor --download`, placeholder `data/patterns_seed.yaml` + `tests/golden/retrieval.yaml`.
+- **Phase 1.5 — trust layer:** `confidence.py`, source-trust ranking, `locking.py` (single-writer), override-conflict warnings, optional reranker toggle (`rerank.py`), embedding/retrieval cache (`cache.py`).
+- **Phase 2 — repo intelligence:** `engines/depgraph.py` (tree-sitter Apex + lxml metadata, `analyze_local_blast_radius` with immediate/transitive/unresolved), `memory/env_context.py` (`sfdx-project.json`).
+- **Security + Versioning gate (P0):** versioned supersession (`upsert_versioned`), `security/sanitize.py`, `security/guard.py`, `security/allowlist.py`.
+- **Phase 3 — ingestion:** `ingest/chunk.py`, `ingest/embed.py` (sanitize→guard→tag→versioned upsert), `ingest/scraper.py` (lazy Crawl4AI + SSRF/allowlist), `sync_latest_patterns`.
+- **Phase 4 — persona & memory:** `memory/persona.py` (opt-in), override ranking, semantic anchors (`memory/ranking.py`).
+- **Phase 5 — diagrams:** `diagrams/mermaid.py`, `diagrams/drawio.py`, `diagrams/render.py`, `generate_architecture_diagram` + `set_deliverable_preference`.
+- **Phase 6 — observability & lint:** `obs/audit.py` (audited tool dispatch), `lint.py` + CLI `lint`, no-network guardrail test.
+- **Phase 6.5 — scoring:** `engines/scoring.py` (`score_architecture`, explainable per-pillar + `risk_score`).
+- **Phase 7 — hardening:** `LICENSE` (Apache-2.0) + `pyproject` license, GitHub Actions CI with HF model caching, CLI `test` / `rebuild` / `gc` / `score`, schema-mismatch guard, stale-vector GC.
+
+MCP tools live: `health_echo`, `query_architect_db`, `check_governor_limit`, `analyze_local_blast_radius`, `generate_architecture_diagram`, `set_deliverable_preference`, `score_architecture`, `sync_latest_patterns`.
+
+Remaining / deferred: replace placeholder seed patterns with real source-attributed content; local-LLM sovereign mode and multi-repo (Gap 7) remain deferred per the build plan.
+
+---
+
+## 16. Open decisions & packaging
+
+Decisions still needed before/while building (no blockers for Phase 1):
+
+1. **Bundled seed patterns:** how many hand-written patterns ship in-repo for offline first-run search (recommend 10–20 covering common pillars)? Source/authorship?
+2. **Offline bootstrap (additional gap #4):** ship with model pre-cached, or document a one-time online `sf-architect doctor --download`? Affects the "100% offline" claim.
+3. **Confidence weighting:** the exact `f(similarity, source_trust, version_match, corroboration)` formula and thresholds for the "low confidence" label.
+4. **Multi-repo (Gap 7):** in-scope for v1 or explicitly deferred to v2?
+5. **License:** no `LICENSE` file exists yet. For an open-source CLI that depends on MIT/Apache deps, recommend **Apache-2.0** or **MIT**. Add `LICENSE` + `license` field in `pyproject.toml`.
+6. **CI:** add GitHub Actions (lint + pytest) once Phase 1 logic lands (deliberately excluded from the initial scaffold).
