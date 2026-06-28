@@ -1,21 +1,376 @@
 # Curated Salesforce governor limits by API version.
-# Compiled into SQLite by engines/limits.py (Phase 1.4).
+# Compiled into SQLite by engines/limits.py.
 #
-# last_verified: 2026-06-01
+# All values are verified from:
+#   https://developer.salesforce.com/docs/atlas.en-us.salesforce_app_limits_cheatsheet.meta/salesforce_app_limits_cheatsheet/salesforce_app_limits_platform_apexgov.htm
+#   https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_gov_limits.htm
+# (Summer '26 / API version 67.0 — limits are identical to v62.0 for all entries below)
+#
+# ── Sections ──────────────────────────────────────────────────────────────────
+#   per_transaction_sync : Per-transaction limits for synchronous Apex
+#                          (synchronous value used; async values documented inline)
+#   platform             : Org-wide / platform limits not tied to a single transaction
+#   static               : Static / structural limits that don't reset per transaction
+# ──────────────────────────────────────────────────────────────────────────────
+#
+# MAINTENANCE: Re-verify each Salesforce release (~3× per year).
+# Update last_verified dates below and append new api_version blocks when
+# Salesforce changes a limit value.
 
 api_versions:
   v62.0:
-    last_verified: "2026-06-01"
+    # Winter '25 release — limits verified against Summer '26 docs (unchanged).
+    last_verified: "2026-06-20"
     limits:
+
+      # ── Per-transaction: SOQL ─────────────────────────────────────────────
+      soql_queries:
+        description: >-
+          Maximum number of SOQL queries issued per synchronous Apex transaction.
+          Asynchronous (batch/future/queueable) limit is 200.
+        value: 100
+        unit: queries
+
       soql_query_rows:
-        description: Maximum SOQL query rows returned per transaction
+        description: >-
+          Maximum total records retrieved by SOQL queries in one transaction.
+          Applies to both synchronous and asynchronous Apex.
         value: 50000
         unit: rows
+
+      sosl_queries:
+        description: >-
+          Maximum number of SOSL queries issued per transaction.
+          Applies to both synchronous and asynchronous Apex.
+        value: 20
+        unit: queries
+
+      sosl_query_rows:
+        description: >-
+          Maximum records returned by a single SOSL query.
+          Applies to both synchronous and asynchronous Apex.
+        value: 2000
+        unit: rows
+
+      query_locator_rows:
+        description: >-
+          Maximum records retrieved by Database.getQueryLocator in a single
+          transaction. For Batch Apex the locator can reference up to 50 million
+          rows across the job, but each execute() invocation is still limited here.
+        value: 10000
+        unit: rows
+
+      # ── Per-transaction: DML ──────────────────────────────────────────────
+      dml_statements:
+        description: >-
+          Maximum DML statements (insert/update/delete/upsert/merge/undelete,
+          Approval.process, Database.setSavePoint, etc.) issued per transaction.
+          Applies to both synchronous and asynchronous Apex.
+        value: 150
+        unit: statements
+
+      dml_rows:
+        description: >-
+          Maximum records processed by DML statements, Approval.process, or
+          Database.emptyRecycleBin in a single transaction.
+          Applies to both synchronous and asynchronous Apex.
+        value: 10000
+        unit: rows
+
+      trigger_stack_depth:
+        description: >-
+          Maximum stack depth for recursive Apex invocations that fire triggers
+          via insert, update, or delete. Applies to both sync and async Apex.
+        value: 16
+        unit: levels
+
+      # ── Per-transaction: CPU & memory ─────────────────────────────────────
+      cpu_time:
+        description: >-
+          Maximum CPU time on Salesforce servers for a synchronous Apex transaction.
+          Asynchronous (batch/future/queueable) limit is 60,000 ms.
+          Includes time in package code and workflows; excludes DB wait time.
+        value: 10000
+        unit: milliseconds
+
       heap_size:
-        description: Maximum heap size per Apex transaction
+        description: >-
+          Maximum heap size for a synchronous Apex transaction.
+          Asynchronous (batch/future/queueable) limit is 12 MB (12,000,000 bytes).
+          Email services heap size is 50 MB.
         value: 6000000
         unit: bytes
-      dml_rows:
-        description: Maximum DML rows per transaction
+
+      max_execution_time:
+        description: >-
+          Maximum wall-clock execution time for any single Apex transaction,
+          synchronous or asynchronous (including batch execute() invocations).
+        value: 600
+        unit: seconds
+
+      # ── Per-transaction: callouts ─────────────────────────────────────────
+      callouts:
+        description: >-
+          Maximum number of HTTP requests or web service callouts in a single
+          Apex transaction. Applies to both synchronous and asynchronous Apex.
+        value: 100
+        unit: callouts
+
+      callout_timeout_cumulative:
+        description: >-
+          Maximum cumulative timeout for all callouts (HTTP or web services)
+          in a single transaction. Applies to both sync and async Apex.
+        value: 120
+        unit: seconds
+
+      # ── Per-transaction: async / queueable ───────────────────────────────
+      future_calls:
+        description: >-
+          Maximum @future method calls allowed per synchronous Apex invocation.
+          In batch and future contexts the limit is 0; in queueable context it is 50.
+        value: 50
+        unit: calls
+
+      enqueue_jobs:
+        description: >-
+          Maximum Apex jobs that can be added to the queue with System.enqueueJob
+          per synchronous transaction. Asynchronous (batch/future) limit is 1.
+        value: 50
+        unit: jobs
+
+      # ── Per-transaction: messaging ────────────────────────────────────────
+      send_email_calls:
+        description: >-
+          Maximum Messaging.sendEmail / Messaging.sendEmailMessage calls per
+          transaction. Applies to both synchronous and asynchronous Apex.
+        value: 10
+        unit: calls
+
+      platform_event_publishes_immediate:
+        description: >-
+          Maximum EventBus.publish calls for platform events configured to
+          publish immediately (Publish Immediately behaviour) per transaction.
+          Applies to both sync and async Apex.
+        value: 150
+        unit: calls
+
+      # ── Platform (org-wide) limits ────────────────────────────────────────
+      scheduled_apex_classes:
+        description: >-
+          Maximum number of Apex classes that can be scheduled concurrently.
+          In Developer Edition orgs the limit is 5.
+        value: 100
+        unit: classes
+
+      concurrent_batch_jobs:
+        description: >-
+          Maximum number of Batch Apex jobs that can be queued or active
+          concurrently at the org level.
+        value: 5
+        unit: jobs
+
+      batch_flex_queue_size:
+        description: >-
+          Maximum number of Batch Apex jobs in the Apex flex queue with
+          Holding status waiting to be promoted for processing.
+        value: 100
+        unit: jobs
+
+      # ── Static / structural limits ────────────────────────────────────────
+      callout_default_timeout:
+        description: >-
+          Default timeout for a single HTTP or web service callout when no
+          explicit timeout is set. Override per-request up to 120 s cumulative.
+        value: 10
+        unit: seconds
+
+      max_apex_code_size_org:
+        description: >-
+          Maximum total compiled Apex code allowed across all non-managed-package
+          classes and triggers in an org (excluding @isTest classes).
+          Can be increased via Salesforce support case.
+        value: 6000000
+        unit: bytes
+
+      apex_trigger_batch_size:
+        description: >-
+          Number of records passed to a single trigger invocation. If more records
+          are affected, the trigger fires in subsequent batches of 200.
+          Platform Event and CDC triggers have a batch size of 2,000.
+        value: 200
+        unit: records
+
+      batch_query_locator_max_rows:
+        description: >-
+          Maximum records that a Batch Apex query in Database.QueryLocator can
+          return across the entire batch job (not per execute() invocation).
+        value: 50000000
+        unit: rows
+
+  v67.0:
+    # Summer '26 release — per-transaction and platform limits are unchanged
+    # from v62.0. Verified against the Summer '26 (v67.0) official docs:
+    #   https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_gov_limits.htm
+    last_verified: "2026-06-20"
+    limits:
+
+      soql_queries:
+        description: >-
+          Maximum number of SOQL queries issued per synchronous Apex transaction.
+          Asynchronous (batch/future/queueable) limit is 200.
+        value: 100
+        unit: queries
+
+      soql_query_rows:
+        description: >-
+          Maximum total records retrieved by SOQL queries in one transaction.
+          Applies to both synchronous and asynchronous Apex.
+        value: 50000
+        unit: rows
+
+      sosl_queries:
+        description: >-
+          Maximum number of SOSL queries issued per transaction.
+          Applies to both synchronous and asynchronous Apex.
+        value: 20
+        unit: queries
+
+      sosl_query_rows:
+        description: >-
+          Maximum records returned by a single SOSL query.
+          Applies to both synchronous and asynchronous Apex.
+        value: 2000
+        unit: rows
+
+      query_locator_rows:
+        description: >-
+          Maximum records retrieved by Database.getQueryLocator in a single
+          transaction. Batch Apex locator references up to 50 million rows total.
         value: 10000
+        unit: rows
+
+      dml_statements:
+        description: >-
+          Maximum DML statements issued per transaction.
+          Applies to both synchronous and asynchronous Apex.
+        value: 150
+        unit: statements
+
+      dml_rows:
+        description: >-
+          Maximum records processed by DML statements or Approval.process
+          in a single transaction.
+        value: 10000
+        unit: rows
+
+      trigger_stack_depth:
+        description: >-
+          Maximum recursive trigger invocation stack depth.
+          Applies to both sync and async Apex.
+        value: 16
+        unit: levels
+
+      cpu_time:
+        description: >-
+          Maximum CPU time for a synchronous Apex transaction (10,000 ms).
+          Asynchronous limit is 60,000 ms.
+        value: 10000
+        unit: milliseconds
+
+      heap_size:
+        description: >-
+          Maximum heap size for a synchronous Apex transaction (6 MB).
+          Asynchronous limit is 12 MB (12,000,000 bytes).
+        value: 6000000
+        unit: bytes
+
+      max_execution_time:
+        description: >-
+          Maximum wall-clock execution time for any single Apex transaction.
+        value: 600
+        unit: seconds
+
+      callouts:
+        description: >-
+          Maximum HTTP/web service callouts per transaction.
+          Applies to both synchronous and asynchronous Apex.
+        value: 100
+        unit: callouts
+
+      callout_timeout_cumulative:
+        description: >-
+          Maximum cumulative callout timeout per transaction.
+        value: 120
+        unit: seconds
+
+      future_calls:
+        description: >-
+          Maximum @future method calls per synchronous Apex invocation.
+        value: 50
+        unit: calls
+
+      enqueue_jobs:
+        description: >-
+          Maximum System.enqueueJob calls per synchronous transaction.
+          Asynchronous (batch/future) limit is 1.
+        value: 50
+        unit: jobs
+
+      send_email_calls:
+        description: >-
+          Maximum Messaging.sendEmail calls per transaction.
+        value: 10
+        unit: calls
+
+      platform_event_publishes_immediate:
+        description: >-
+          Maximum EventBus.publish calls for immediately-published events per
+          transaction.
+        value: 150
+        unit: calls
+
+      scheduled_apex_classes:
+        description: >-
+          Maximum concurrently scheduled Apex classes (org-wide).
+          Developer Edition orgs: 5.
+        value: 100
+        unit: classes
+
+      concurrent_batch_jobs:
+        description: >-
+          Maximum Batch Apex jobs queued or active concurrently (org-wide).
+        value: 5
+        unit: jobs
+
+      batch_flex_queue_size:
+        description: >-
+          Maximum Batch Apex jobs in Holding status in the flex queue (org-wide).
+        value: 100
+        unit: jobs
+
+      callout_default_timeout:
+        description: >-
+          Default timeout for a single callout when no explicit timeout is set.
+        value: 10
+        unit: seconds
+
+      max_apex_code_size_org:
+        description: >-
+          Maximum total compiled Apex code in an org (excluding managed packages
+          and @isTest classes).
+        value: 6000000
+        unit: bytes
+
+      apex_trigger_batch_size:
+        description: >-
+          Records passed to a single trigger invocation (200 for SObject triggers;
+          2,000 for Platform Event and CDC triggers).
+        value: 200
+        unit: records
+
+      batch_query_locator_max_rows:
+        description: >-
+          Maximum rows a Batch Apex Database.QueryLocator can return across the
+          entire batch job.
+        value: 50000000
         unit: rows

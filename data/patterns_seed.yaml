@@ -1,0 +1,382 @@
+# =============================================================================
+# Bundled offline architecture patterns (plan Section 12.1).
+# Loaded into LanceDB by `sf-architect seed` via engines/patterns.load_patterns_seed.
+#
+# Source references: all provenance_url values point to official Salesforce
+# developer or architect documentation that was live as of 2026-06-20.
+#
+# Coverage: 18 patterns across all four Well-Architected pillars.
+#   Security     (5): CRUD/FLS, sharing keywords, least privilege, named
+#                     credentials, org-wide defaults
+#   Reliability  (5): idempotent callouts, queueable async, platform events,
+#                     error handling, scale testing
+#   Scalability  (5): bulkification, one-trigger-per-object, no SOQL/DML in
+#                     loops, data skew, map-based consolidation
+#   Performance  (3): platform cache, selective SOQL, async for heavy work
+#
+# Each pattern's id is derived at load time from:
+#   sha1(provenance_url + heading + knowledge_version)
+# =============================================================================
+
+patterns:
+
+  # ===========================================================================
+  # SCALABILITY
+  # ===========================================================================
+
+  - title: "Bulkify Apex DML and SOQL"
+    heading: "Bulkification"
+    text: >
+      Write Apex triggers and classes to operate on collections of records rather
+      than a single record at a time. Move SOQL queries and DML statements outside
+      of loops so that a transaction processing many records shares a single pool
+      of governor-limit resources. Salesforce enforces 100 SOQL queries and 150 DML
+      statements per synchronous transaction; placing either inside a loop exhausts
+      those limits at 100–150 records. Always collect IDs in a Set, run one query
+      outside the loop, and execute one bulk DML on a List.
+    api_version: "62.0"
+    knowledge_version: "v62"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_gov_limits.htm"
+    pillar: Scalability
+    maturity: tried-and-true
+
+  - title: "One Trigger Per Object with a Handler Class"
+    heading: "One Trigger Per Object"
+    text: >
+      Maintain exactly one Apex trigger per SObject and delegate all business logic
+      to a dedicated handler class. Multiple triggers on the same object execute in
+      an undefined order and dramatically increase complexity, making it impossible
+      to guarantee execution sequence or prevent conflicting updates. A single trigger
+      with a handler pattern (e.g., AccountTriggerHandler) provides a single, auditable
+      entry point for all automations on that object, simplifies testing, and reduces
+      the risk of runaway recursion.
+    api_version: "62.0"
+    knowledge_version: "v62"
+    source_type: community_blog
+    source_trust: 85
+    provenance_url: "https://developer.salesforce.com/blogs/2015/01/apex-best-practices-15-apex-commandments"
+    pillar: Scalability
+    maturity: tried-and-true
+
+  - title: "Avoid SOQL and DML Inside Loops"
+    heading: "Avoid SOQL and DML in Loops"
+    text: >
+      Never place SOQL queries or DML statements inside a for loop. Each iteration
+      of a loop that runs a query or a DML statement consumes one of the 100 SOQL
+      or 150 DML statement allowances for the transaction. With a trigger batch size
+      of 200 records the limit is breached after the first iteration when queries or
+      DML are inside the loop. Collect record IDs in a Set, execute one bulk SOQL
+      outside the loop using the IN :setVar pattern, process the Map result in the
+      loop, then execute one DML on the aggregated List after the loop.
+    api_version: "62.0"
+    knowledge_version: "v62"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_gov_limits.htm"
+    pillar: Scalability
+    maturity: tried-and-true
+
+  - title: "Prevent Data and Ownership Skew"
+    heading: "Data Skew Prevention"
+    text: >
+      Avoid creating record and data skew by ensuring no single parent record has
+      more than 10,000 child records in a master-detail or lookup relationship, and
+      no single user owns more than 10,000 records of the same object. Skewed parents
+      cause row-level locking contention during bulk DML on child records, severely
+      degrading throughput and triggering lock timeout errors. Use Full sandboxes and
+      Scale Test to simulate production data shapes before go-live. Define a data
+      lifecycle policy to archive or purge aging records that no longer provide
+      business value.
+    api_version: "62.0"
+    knowledge_version: "v62"
+    source_type: architect_site
+    source_trust: 95
+    provenance_url: "https://architect.salesforce.com/docs/architect/well-architected/guide/reliable"
+    pillar: Scalability
+    maturity: proven
+
+  - title: "Use Maps to Consolidate SOQL Lookups"
+    heading: "Map-Based SOQL Query Consolidation"
+    text: >
+      Instead of running separate queries inside a loop to look up related records,
+      query all related records once, store them in a Map<Id, SObject>, and look up
+      values inside the loop using the map key. This pattern reduces SOQL usage from
+      N queries to 1 and eliminates nested loops that multiply CPU time. It also
+      avoids requerying the same object multiple times within a single transaction
+      when the same related records are needed by different methods in a trigger
+      handler chain.
+    api_version: "62.0"
+    knowledge_version: "v62"
+    source_type: community_blog
+    source_trust: 85
+    provenance_url: "https://developer.salesforce.com/blogs/2015/01/apex-best-practices-15-apex-commandments"
+    pillar: Scalability
+    maturity: tried-and-true
+
+  # ===========================================================================
+  # SECURITY
+  # ===========================================================================
+
+  - title: "Enforce CRUD and FLS in Apex"
+    heading: "CRUD and FLS Enforcement"
+    text: >
+      Apex runs in system context by default and does not automatically enforce
+      object-level (CRUD) or field-level security (FLS). In API version 67.0 and
+      later, Apex runs in user mode by default; in earlier versions you must enforce
+      permissions explicitly. Use the WITH USER_MODE clause on SOQL queries or pass
+      AccessLevel.USER_MODE to Database methods to enforce both sharing rules and
+      FLS. Use Security.stripInaccessible to remove inaccessible fields from query
+      results before returning data to the caller. Failure to enforce FLS can expose
+      sensitive fields to users who should not see them.
+    api_version: "62.0"
+    knowledge_version: "v62"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_classes_enforce_usermode.htm"
+    pillar: Security
+    maturity: tried-and-true
+
+  - title: "Declare Apex Sharing Keywords Explicitly"
+    heading: "Apex Sharing Keywords"
+    text: >
+      Always declare an explicit sharing keyword on every Apex class that contains
+      database operations or SOQL queries. Using with sharing enforces the running
+      user's record-level sharing rules; without sharing bypasses them and should be
+      used only with explicit, documented justification. Use inherited sharing when
+      building utility classes that must adapt to the sharing context of their callers.
+      Note that sharing keywords do not enforce field-level security or CRUD — those
+      must be enforced separately. Apex triggers run implicitly without sharing but
+      database operations within their bodies default to user mode.
+    api_version: "62.0"
+    knowledge_version: "v62"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_classes_keywords_sharing.htm"
+    pillar: Security
+    maturity: tried-and-true
+
+  - title: "Apply the Principle of Least Privilege"
+    heading: "Principle of Least Privilege"
+    text: >
+      Design your sharing and access model so that users, connected apps, and
+      automated processes have only the minimum permissions required to do their job.
+      Use personas rather than individuals when defining authorization schemes: model
+      permission sets around functional roles and assign them explicitly rather than
+      granting broad profiles. Set Organization-Wide Defaults to Private unless a
+      clear business requirement dictates otherwise, and open access up with sharing
+      rules and manual shares. Avoid over-engineered sharing schemes — complex rules
+      cause performance issues and make the model hard to audit.
+    api_version: "62.0"
+    knowledge_version: "v62"
+    source_type: architect_site
+    source_trust: 95
+    provenance_url: "https://architect.salesforce.com/docs/architect/well-architected/guide/secure"
+    pillar: Security
+    maturity: tried-and-true
+
+  - title: "Use Named Credentials for Authenticated Callouts"
+    heading: "Named Credentials for Callouts"
+    text: >
+      Store endpoint URLs and authentication credentials in Named Credentials and
+      External Credentials rather than hardcoding them in Apex or storing them in
+      Custom Settings. Named credentials encapsulate the callout endpoint and
+      authentication protocol (OAuth 2.0, Basic Auth, JWT, etc.) in a single
+      metadata-driven definition. Reference them in Apex with
+      callout:CredentialName/path, which keeps secrets out of code and out of
+      version control. The extensible named credential model introduced in Winter
+      '23 supersedes legacy named credentials; use it for all new callout designs
+      as legacy named credentials are deprecated.
+    api_version: "62.0"
+    knowledge_version: "v62"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/platform/named-credentials/guide/get-started.html"
+    pillar: Security
+    maturity: proven
+
+  - title: "Set Org-Wide Defaults and Design a Layered Sharing Model"
+    heading: "Org-Wide Defaults and Sharing Model"
+    text: >
+      Establish your data security baseline by setting Organization-Wide Defaults
+      to Private for sensitive objects, then open access upward using role hierarchy,
+      sharing rules, and manual shares. This layered approach prevents accidental
+      data exposure and satisfies audit requirements by requiring explicit grants
+      rather than implicit access. Avoid setting OWDs to Public Read/Write unless
+      non-sensitive data sharing is genuinely required. Use Transaction Security
+      policies and Real-Time Event Monitoring (Salesforce Shield) for high-sensitivity
+      applications that require detection and response to suspicious access patterns.
+    api_version: "62.0"
+    knowledge_version: "v62"
+    source_type: architect_site
+    source_trust: 95
+    provenance_url: "https://architect.salesforce.com/docs/architect/well-architected/guide/secure"
+    pillar: Security
+    maturity: tried-and-true
+
+  # ===========================================================================
+  # RELIABILITY
+  # ===========================================================================
+
+  - title: "Idempotent Integration Callouts with Retry"
+    heading: "Idempotent Integration Callouts"
+    text: >
+      Design outbound integrations so that retrying a failed callout does not create
+      duplicate records or corrupt data in the remote system. Use Named Credentials
+      for authentication and define a unique correlation or idempotency key on each
+      request so the receiving system can detect and ignore duplicates. Queue callout
+      work in a Queueable or Batch Apex job so transient network failures can be
+      retried without data loss. Always handle non-200 HTTP responses explicitly and
+      log or alert on retry exhaustion rather than silently swallowing failures.
+    api_version: "62.0"
+    knowledge_version: "v62"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/platform/named-credentials/guide/get-started.html"
+    pillar: Reliability
+    maturity: proven
+
+  - title: "Use Queueable Apex for Monitored Async Work"
+    heading: "Queueable Apex for Async Work"
+    text: >
+      Implement the Queueable interface instead of @future methods when you need to
+      monitor job status, chain dependent jobs, or pass complex objects between
+      invocations. Queueable jobs are added to the Apex flex queue via
+      System.enqueueJob, run with the higher asynchronous governor limits (200 SOQL
+      queries, 12 MB heap, 60 s CPU), and can be queried via AsyncApexJob for
+      observability. Up to 50 jobs can be enqueued per synchronous transaction and
+      1 per asynchronous context. Use queueable chaining (re-enqueue from the
+      execute method) for long-running multi-step operations that exceed the single
+      execution limits.
+    api_version: "62.0"
+    knowledge_version: "v62"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexref.meta/apexref/apex_class_System_Queueable.htm"
+    pillar: Reliability
+    maturity: proven
+
+  - title: "Use Platform Events for Loosely Coupled Integrations"
+    heading: "Platform Events for Loose Coupling"
+    text: >
+      Use Platform Events to build event-driven integrations that decouple publishers
+      from subscribers both within Salesforce and with external systems. Publishers
+      fire a platform event through Apex, Flow, or the REST API without needing to
+      know who is listening; subscribers process events asynchronously via Apex
+      triggers, Flows, or external CometD/Pub-Sub API clients. This pattern avoids
+      tight coupling between automations, allows subscribers to be added or removed
+      independently, and enables retry and buffering via the EventBus. Use
+      Publish-After-Commit events (default) for transactional consistency; use
+      Publish-Immediately events only when low latency is critical and idempotency
+      is guaranteed.
+    api_version: "62.0"
+    knowledge_version: "v62"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.platform_events.meta/platform_events/platform_events_intro.htm"
+    pillar: Reliability
+    maturity: proven
+
+  - title: "Robust Apex Error Handling with Partial Success Patterns"
+    heading: "Apex Error Handling and Partial Success"
+    text: >
+      Use Database.insert/update/delete with allOrNone=false (partial success) when
+      processing bulk records so a single bad record does not roll back the entire
+      batch. Inspect the SaveResult or UpsertResult array to log or quarantine failed
+      records rather than ignoring errors. Catch specific exceptions (DmlException,
+      CalloutException, QueryException) rather than catching the base Exception class
+      to avoid hiding unrelated faults. Never let a raw exception propagate across the
+      MCP or API boundary — always return a structured error response so callers can
+      handle failures gracefully without seeing an uncontrolled stack trace.
+    api_version: "62.0"
+    knowledge_version: "v62"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_gov_limits.htm"
+    pillar: Reliability
+    maturity: proven
+
+  - title: "Validate Scalability with Scale Test Before Go-Live"
+    heading: "Scale Testing and Availability Design"
+    text: >
+      Use Salesforce Scale Test (available in Full sandboxes) to simulate projected
+      production workloads and validate that the architecture can handle peak data
+      volumes before deploying. Define SLOs (Service-Level Objectives) and SLIs
+      (Service-Level Indicators) to measure availability and responsiveness
+      continuously. Monitor asynchronous jobs (Batch Apex, Queueable, Scheduled Apex)
+      using AsyncApexJob queries or Proactive Monitoring, and set up alerts to catch
+      failures early. Conduct risk assessments before major releases or seasonal
+      spikes, and test failure mitigation plans periodically so recovery procedures
+      are validated rather than theoretical.
+    api_version: "62.0"
+    knowledge_version: "v62"
+    source_type: architect_site
+    source_trust: 95
+    provenance_url: "https://architect.salesforce.com/docs/architect/well-architected/guide/reliable"
+    pillar: Reliability
+    maturity: proven
+
+  # ===========================================================================
+  # PERFORMANCE
+  # ===========================================================================
+
+  - title: "Use Platform Cache for Hot Read-Mostly Data"
+    heading: "Platform Caching"
+    text: >
+      Store hot, read-mostly reference data in Platform Cache (org or session
+      partitions) to eliminate redundant SOQL queries on frequently accessed data.
+      Implement a cache-aside (lazy loading) pattern: check the cache before running
+      SOQL, store the result in the cache on a miss, and read from cache on all
+      subsequent hits within the same or subsequent transactions. Use org cache for
+      trigger-context data (triggers cannot write to session cache). Retrieval from
+      Platform Cache takes under 10 ms vs. a database round-trip, significantly
+      reducing CPU time and improving user-facing latency. Set appropriate TTL values
+      and handle cache misses gracefully to avoid NullPointerExceptions.
+    api_version: "62.0"
+    knowledge_version: "v62"
+    source_type: community_blog
+    source_trust: 85
+    provenance_url: "https://developer.salesforce.com/blogs/2020/06/caching-in-the-salesforce-platform"
+    pillar: Performance
+    maturity: proven
+
+  - title: "Write Selective SOQL Queries to Avoid Long-Running Transactions"
+    heading: "Selective SOQL Queries"
+    text: >
+      Construct SOQL queries so they use indexed fields in their WHERE clauses,
+      enabling the query optimizer to use a selective index rather than scanning
+      the full table. Non-selective queries on large objects (millions of records)
+      can exceed the 120-second SOQL query timeout and cancel the transaction.
+      Avoid partial text comparisons (LIKE '%value%'), functions on fields (e.g.,
+      CALENDAR_MONTH()), and large IN clauses. Query only the fields you need —
+      SELECT Id, Name rather than SELECT * — to reduce heap usage and data transfer.
+      Use ApexGuru to proactively detect and fix non-selective patterns before they
+      cause production failures.
+    api_version: "62.0"
+    knowledge_version: "v62"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_gov_limits.htm"
+    pillar: Performance
+    maturity: tried-and-true
+
+  - title: "Move Heavy Logic to Asynchronous Apex"
+    heading: "Asynchronous Apex for Heavy Work"
+    text: >
+      When a transaction involves complex calculations, large data volumes, or
+      multiple callouts that would exceed synchronous limits (10 s CPU, 6 MB heap,
+      100 SOQL), move the work to an asynchronous context: Queueable Apex, Batch
+      Apex, or Scheduled Apex. Asynchronous Apex receives significantly higher limits
+      (60 s CPU, 12 MB heap, 200 SOQL) and does not block the user-facing response.
+      Batch Apex processes up to 50 million records through a configurable batch size
+      (default 200) and resets governor limits for each execute() invocation. This
+      pattern is the primary tool for processing high-volume data loads, complex
+      multi-step integrations, and background maintenance jobs.
+    api_version: "62.0"
+    knowledge_version: "v62"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_gov_limits.htm"
+    pillar: Performance
+    maturity: tried-and-true
