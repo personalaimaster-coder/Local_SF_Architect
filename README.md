@@ -32,6 +32,26 @@ It is a **Model Context Protocol (MCP) server** — think of it as a plugin that
 
 ---
 
+## Easiest setup — the VS Code / Cursor extension
+
+If you use **VS Code (with GitHub Copilot)** or **Cursor**, the simplest path is the
+companion extension. It installs the engine for you and wires it into your AI agent
+in one click — no manual `mcp.json` editing.
+
+1. Install **Local SF Architect** from the VS Code Marketplace (VS Code/Copilot) or
+   Open VSX (Cursor).
+2. On first activation it offers to: install the engine via `uv`, download the model,
+   seed the knowledge base, and configure every detected agent (Copilot, Cursor, and
+   the Claude Code CLI if present).
+3. Open your AI chat in **Agent mode** and start asking questions.
+
+The extension lives in [`extension/`](extension/); see [`extension/README.md`](extension/README.md)
+for details. It still relies on `uv` being installed and needs internet once (PyPI install
+plus the ~130 MB model). Prefer to set things up by hand, or using Claude Code only? The
+manual MCP steps below still work exactly as before.
+
+---
+
 ## Architecture overview
 
 ```
@@ -338,8 +358,11 @@ The test suite covers:
 │   ├── limits_seed.yaml        # curated Salesforce governor limits (v62.0)
 │   └── patterns_seed.yaml      # seed architecture patterns + embeddings
 ├── tests/                      # full test suite
+├── .vscode/
+│   └── mcp.json                # VS Code MCP config (GitHub Copilot Agent mode)
 ├── docs/                       # detailed design docs
 │   ├── mcp-cursor-setup.md     # Cursor + Claude Code MCP config guide
+│   ├── vscode-setup.md         # VS Code + GitHub Copilot setup guide
 │   ├── Tech-Stack.md           # full tech stack with versions + rationale
 │   ├── Implementation-Plan.md  # phase-by-phase build playbook
 │   └── Local-SF-Architect-Analysis-and-Plan.md
@@ -354,6 +377,7 @@ The test suite covers:
 | Doc | What it covers |
 |---|---|
 | [`docs/mcp-cursor-setup.md`](docs/mcp-cursor-setup.md) | Full Cursor + Claude Code MCP config snippets |
+| [`docs/vscode-setup.md`](docs/vscode-setup.md) | VS Code + GitHub Copilot Agent mode setup (VS Code 1.99+) |
 | [`docs/Tech-Stack.md`](docs/Tech-Stack.md) | Every dependency, version, license, and the reason it was chosen |
 | [`docs/Implementation-Plan.md`](docs/Implementation-Plan.md) | Phase-by-phase build playbook (Phases 0–6.5 complete) |
 | [`docs/Local-SF-Architect-Analysis-and-Plan.md`](docs/Local-SF-Architect-Analysis-and-Plan.md) | Full analysis, gap list, and architecture decisions |

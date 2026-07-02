@@ -34,8 +34,31 @@ dev = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.sdist]
+# Keep the source distribution to the Python project only. Without this,
+# hatchling includes everything not gitignored — notably the committed
+# `extension/` bundle and its `node_modules/`, bloating the sdist to ~31 MB.
+# Leading slashes anchor to the project root; unanchored names like
+# "README.md" would otherwise match nested files (e.g. under node_modules).
+include = [
+    "/src",
+    "/data/limits_seed.yaml",
+    "/data/patterns_seed.yaml",
+    "/tests",
+    "/README.md",
+    "/LICENSE",
+    "/pyproject.toml",
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/sf_architect"]
+
+# Ship the curated seed data inside the wheel so `sf-architect seed` works for
+# users who install from PyPI (e.g. via `uv tool install` / `uvx`) and never
+# clone the repo. The files stay at the repo-root `data/` for dev + tests.
+[tool.hatch.build.targets.wheel.force-include]
+"data/limits_seed.yaml" = "sf_architect/data/limits_seed.yaml"
+"data/patterns_seed.yaml" = "sf_architect/data/patterns_seed.yaml"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

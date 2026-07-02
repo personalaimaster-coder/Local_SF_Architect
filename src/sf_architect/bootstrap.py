@@ -37,12 +37,21 @@ scrape_allowlist: []                     # P0 for Gap 5; empty = scraping disabl
 
 
 def repo_data_dir() -> Path:
-    """Locate the repo-committed ``data/`` directory (seed sources).
+    """Locate the directory holding the seed sources (``limits_seed.yaml`` etc.).
 
-    Resolves relative to the installed package first, then the current working
-    directory, so ``sf-architect seed`` works from a dev checkout.
+    Resolution order:
+
+    1. ``sf_architect/data/`` packaged alongside this module — present when the
+       package is installed from a wheel (PyPI / ``uv tool install`` / ``uvx``),
+       where the seed files are force-included at build time.
+    2. The repo-root ``data/`` directory — present in a dev checkout.
+    3. ``./data`` relative to the current working directory — last-resort fallback.
+
+    The first candidate that actually contains ``limits_seed.yaml`` wins, so the
+    same code path works whether running from source or from an installed wheel.
     """
     candidates = [
+        Path(__file__).resolve().parent / "data",
         Path(__file__).resolve().parents[2] / "data",
         Path.cwd() / "data",
     ]
