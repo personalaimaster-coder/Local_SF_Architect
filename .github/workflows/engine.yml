@@ -1,0 +1,59 @@
+name: Engine
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Lint
+        run: uv run ruff check src/ tests/
+
+      - name: Run tests
+        run: uv run pytest -q
+
+      - name: Build wheel (verifies seed data is packaged)
+        run: |
+          uv build --wheel
+          uv run python -c "import zipfile, glob, sys; \
+            names = zipfile.ZipFile(glob.glob('dist/*.whl')[0]).namelist(); \
+            need = {'sf_architect/data/limits_seed.yaml', 'sf_architect/data/patterns_seed.yaml'}; \
+            missing = need - set(names); \
+            sys.exit('Seed data missing from wheel: %s' % missing) if missing else print('Seed data present in wheel.')"
+
+  publish:
+    # Publish to PyPI only when a v* tag is pushed and tests pass.
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write # enables PyPI trusted publishing (no token needed)
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build sdist + wheel
+        run: uv build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
