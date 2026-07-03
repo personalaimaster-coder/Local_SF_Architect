@@ -12,21 +12,35 @@ import { registerMcpProvider, refreshVsCodeMcp, writeWorkspaceMcpJson } from "./
 import { configureCursor } from "./wiring/cursor";
 import { configureClaudeCode } from "./wiring/claudeCode";
 import { initStatusBar, setState } from "./statusBar";
-import { log, show as showLogs } from "./log";
+import { log, logError, show as showLogs } from "./log";
 import { EXTENSION_ID, STATE_INSTALL_PROMPTED, STATE_SETUP_COMPLETE } from "./constants";
 
 let providerRegistered = false;
 
 export function activate(context: vscode.ExtensionContext): void {
   log("Local SF Architect extension activating.");
-  initStatusBar(context);
+
+  // Register commands FIRST so they are always available, even if a later
+  // step throws. Otherwise a failure below would leave every command
+  // unregistered ("command 'sfArchitect.*' not found").
+  registerCommands(context);
+
+  try {
+    initStatusBar(context);
+  } catch (err) {
+    logError("initStatusBar failed", err);
+  }
 
   // Register the native MCP provider as early as possible so Copilot can pick
   // up the server once the engine is installed (the provider returns nothing
   // until then, and we fire a refresh after install/configure).
-  providerRegistered = registerMcpProvider(context);
+  try {
+    providerRegistered = registerMcpProvider(context);
+  } catch (err) {
+    logError("registerMcpProvider failed", err);
+    providerRegistered = false;
+  }
 
-  registerCommands(context);
   void reflectInstalledState();
 
   if (config().get<boolean>("autoSetupOnActivate", true)) {

@@ -2,7 +2,7 @@
   "name": "sf-local-architect",
   "displayName": "Local SF Architect",
   "description": "One-click install and setup of the Local Salesforce Architect MCP engine for GitHub Copilot, Cursor, and Claude Code. Fully local, offline Salesforce architecture tooling.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "sf-local-architect",
   "license": "Apache-2.0",
   "engines": {

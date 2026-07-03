@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.1.1
+
+- Fix: extension failed to activate (`Cannot find module './impl/format'`),
+  which left every command unregistered. The bundler now uses each
+  dependency's ESM entry so `jsonc-parser` is bundled correctly.
+- Harden activation: commands are registered first and status-bar / MCP-provider
+  setup is wrapped so a single failure can no longer block the commands.
+
 ## 0.1.0
 
 - Initial release.
