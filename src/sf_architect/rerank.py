@@ -5,8 +5,9 @@ gated by ``reranker_enabled`` in config; when off, retrieval falls back to the
 vector score only. The rerank score also feeds the confidence calculation by
 replacing the per-result ``similarity`` with a normalized rerank relevance.
 
-The model (``BAAI/bge-reranker-v2-m3``, MIT) downloads on first use. The scorer
-is injectable so tests can exercise the toggle without downloading weights.
+The model (``Xenova/ms-marco-MiniLM-L-6-v2``, ~80 MB) downloads on first use and
+is pre-cached by ``sf-architect doctor --download``. The scorer is injectable so
+tests can exercise the toggle without downloading weights.
 """
 
 from __future__ import annotations
@@ -30,7 +31,7 @@ def _cross_encoder(model_name: str):
 
 def _default_scorer(query: str, texts: list[str]) -> list[float]:  # pragma: no cover
     config = read_config()
-    model_name = config.get("reranker_model", "BAAI/bge-reranker-v2-m3")
+    model_name = config.get("reranker_model", "Xenova/ms-marco-MiniLM-L-6-v2")
     encoder = _cross_encoder(model_name)
     return [float(s) for s in encoder.rerank(query, texts)]
 

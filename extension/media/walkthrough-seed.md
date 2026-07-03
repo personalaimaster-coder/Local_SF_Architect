@@ -1,7 +1,8 @@
 # Download model + seed
 
-The engine uses a small local embedding model (~130 MB, downloaded once) and a
-curated knowledge base of Salesforce governor limits and architecture patterns.
+The engine uses small local embedding and reranker models (~210 MB total,
+downloaded once) and a curated knowledge base of Salesforce governor limits and
+architecture patterns (78 patterns across the Well-Architected pillars).
 
 This step runs:
 

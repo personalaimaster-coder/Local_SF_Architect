@@ -19,7 +19,7 @@ wires it into whichever AI agent you use:
 
 - VS Code (or Cursor) **1.101+**
 - [`uv`](https://docs.astral.sh/uv/) on your machine (the extension guides you if it is missing)
-- Internet access **once** for the engine install + the ~130 MB embedding model
+- Internet access **once** for the engine install + the ~210 MB embedding and reranker models
 
 ## What it does on first run
 

@@ -2,7 +2,7 @@
   "name": "sf-local-architect",
   "displayName": "Local SF Architect",
   "description": "One-click install and setup of the Local Salesforce Architect MCP engine for GitHub Copilot, Cursor, and Claude Code. Fully local, offline Salesforce architecture tooling.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "sf-local-architect",
   "license": "Apache-2.0",
   "engines": {
@@ -29,7 +29,8 @@
   },
   "main": "./dist/extension.js",
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "workspaceContains:**/sfdx-project.json"
   ],
   "contributes": {
     "mcpServerDefinitionProviders": [
@@ -111,7 +112,7 @@
         "sfArchitect.autoDownloadModel": {
           "type": "boolean",
           "default": true,
-          "description": "During first-run setup, automatically download the ~130 MB embedding model. If disabled, you must run the model download manually before querying patterns."
+          "description": "During first-run setup, automatically download the embedding and reranker models (~210 MB total). If disabled, you must run the model download manually before querying patterns."
         },
         "sfArchitect.uvPath": {
           "type": "string",
@@ -137,7 +138,7 @@
           {
             "id": "firstRun",
             "title": "Download model + seed",
-            "description": "Download the embedding model (~130 MB, once) and build the local knowledge base.\n[Download Model + Seed](command:sfArchitect.firstRunSetup)",
+            "description": "Download the embedding + reranker models (~210 MB, once) and build the local knowledge base.\n[Download Model + Seed](command:sfArchitect.firstRunSetup)",
             "media": {
               "markdown": "media/walkthrough-seed.md"
             }

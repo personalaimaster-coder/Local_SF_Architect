@@ -240,7 +240,7 @@ Once the MCP server is running in Cursor, the AI has access to these tools. You 
 | `generate_architecture_diagram` | Writes a Mermaid `.md` or draw.io `.drawio` file | *"Draw me the dependency graph for the Order subsystem"* |
 | `set_deliverable_preference` | Persist your preferred diagram format (Mermaid or draw.io) | *"Always generate draw.io diagrams from now on"* |
 | `score_architecture` | Six-pillar scorecard + risk score with explanations | *"Score the architecture health of this project"* |
-| `sync_latest_patterns` | Opt-in: scrape an allowlisted URL and store new patterns | Disabled until you add a domain to `scrape_allowlist` in `config.yaml` |
+| `sync_latest_patterns` | Scrape an allowlisted docs URL and store new patterns | *"Learn the patterns from this Salesforce docs page: <url>"* |
 
 Every tool returns a common envelope:
 
@@ -263,12 +263,23 @@ All runtime data lives under `~/.sf-architect/` and is **never committed to git*
 
 ```
 ~/.sf-architect/
-  config.yaml          your preferences + scrape allowlist (empty by default)
+  config.yaml          your preferences + scrape allowlist (official SF docs domains)
   data/lance/          vector store — patterns + embeddings
   limits.db            compiled governor limits (SQLite)
   logs/audit.db        one row per tool call (SQLite) — local only
   meta.json            schema version + embedding model record
 ```
+
+### Refreshing the knowledge base from official docs
+
+The bundled knowledge base ships with 78 curated patterns (Summer '26 / API v67.0).
+To learn new patterns from a Salesforce documentation page after a release, ask your
+AI agent to call `sync_latest_patterns` with an allowlisted URL, or drive it from the
+tool directly. The pipeline fetches the page, runs SSRF + sanitizer + injection-guard
+checks, chunks and embeds the content, and performs a knowledge-version–aware upsert
+(older guidance for the same source is superseded, not duplicated). Only the official
+Salesforce docs domains in `scrape_allowlist` are permitted. Run `sf-architect gc` to
+prune superseded vectors afterward.
 
 ### Schema migration
 
@@ -284,9 +295,9 @@ This drops and rebuilds all local stores from the seed files.
 
 ## Security & privacy model
 
-- **No outbound network calls** at runtime — enforced by a test that will fail if any tool makes an unexpected network request
-- **Scraping is disabled by default** — `scrape_allowlist` in `config.yaml` is empty; the `sync_latest_patterns` tool is a no-op until you explicitly add a domain
-- **Scraped content is sandboxed** — runs through a sanitizer (strips scripts, zero-width chars, hidden elements) and a prompt-injection guard before storage; labeled as "untrusted reference data" in all responses
+- **No outbound network calls** at runtime — enforced by a test that will fail if any tool makes an unexpected network request (scraping is the only sanctioned network path)
+- **Scraping is domain-gated** — `scrape_allowlist` in `config.yaml` is pre-seeded with the official Salesforce documentation domains only (`developer.salesforce.com`, `architect.salesforce.com`, `help.salesforce.com`). `sync_latest_patterns` refuses any other domain. Set the allowlist to `[]` to disable scraping entirely, or add your own trusted docs domain
+- **Scraped content is sandboxed** — every fetch passes through SSRF validation, a sanitizer (strips scripts, zero-width chars, hidden elements), and a prompt-injection guard before storage; labeled as "untrusted reference data" in all responses
 - **stdio transport only** — no TCP port, no auth surface; the IDE spawns the server as a child process
 - **Your code never leaves your machine**
 

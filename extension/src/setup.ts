@@ -82,7 +82,7 @@ export async function installEngineWithProgress(uvPath: string): Promise<boolean
 }
 
 /**
- * Download the embedding model (optional, ~130 MB) and seed the knowledge base.
+ * Download the embedding + reranker models (optional, ~210 MB) and seed the knowledge base.
  * Marks setup complete in globalState on success.
  */
 export async function runFirstRunSetup(
@@ -104,7 +104,7 @@ export async function runFirstRunSetup(
 
       try {
         if (downloadModel) {
-          progress.report({ message: "Downloading embedding model (~130 MB, one time)…" });
+          progress.report({ message: "Downloading models (~210 MB, one time)…" });
           const code = await runCli(uvPath, ["doctor", "--download"], {
             signal: controller.signal,
             onData: stream,

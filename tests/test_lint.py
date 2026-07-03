@@ -22,6 +22,22 @@ def test_clean_class_passes() -> None:
     assert findings == []
 
 
+def test_expanded_rules_detected() -> None:
+    findings = scan_file(FIXTURES / "BadRules.cls")
+    rules = {f.rule for f in findings}
+    for expected in (
+        "empty_catch_block",
+        "hardcoded_id",
+        "hardcoded_endpoint",
+        "soql_injection_risk",
+        "debug_statement",
+        "deep_nesting",
+    ):
+        assert expected in rules, f"expected rule {expected} in {rules}"
+    # A class that declares sharing must not be flagged for missing sharing.
+    assert "missing_sharing" not in rules
+
+
 def test_cli_lint_nonzero_on_infraction() -> None:
     runner = CliRunner()
     result = runner.invoke(main, ["lint", str(FIXTURES / "Bad.cls")])

@@ -51,7 +51,7 @@ def assign_tags(text: str) -> tuple[str | None, str]:
 
 def _source_type(url: str) -> str:
     domain = urlparse(url).netloc.lower()
-    if domain == "help.salesforce.com":
+    if domain in ("help.salesforce.com", "developer.salesforce.com"):
         return "official_docs"
     if domain == "architect.salesforce.com":
         return "architect_site"
@@ -63,8 +63,8 @@ def _source_type(url: str) -> str:
 def ingest_markdown(
     url: str,
     markdown: str,
-    api_version: str = "62.0",
-    knowledge_version: str = "v62",
+    api_version: str = "67.0",
+    knowledge_version: str = "v67",
     force: bool = False,
     config: dict | None = None,
     classifier: Classifier | None = None,
@@ -117,8 +117,8 @@ def sync_latest_patterns(
     force: bool = False,
     fetcher=None,
     config: dict | None = None,
-    api_version: str = "62.0",
-    knowledge_version: str = "v62",
+    api_version: str = "67.0",
+    knowledge_version: str = "v67",
     classifier: Classifier | None = None,
     lance_dir: str | Path | None = None,
 ) -> dict[str, int]:

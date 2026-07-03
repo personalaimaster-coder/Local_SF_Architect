@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.1.2
+
+- More reliable engine-installed detection: `uv tool list` output is parsed and
+  matched by normalized distribution name instead of a loose substring test.
+- Activate on Salesforce projects (`workspaceContains:**/sfdx-project.json`).
+- Docs/UX updated for the embedding + reranker models (~210 MB total) and the
+  expanded pattern knowledge base. Pairs with engine 0.2.1 on PyPI.
+
 ## 0.1.1
 
 - Fix: extension failed to activate (`Cannot find module './impl/format'`),

@@ -214,10 +214,13 @@ def upsert_versioned(
 
     with write_lock("patterns"):
         table = open_table(lance_dir, create=True)
+        # Scan the current rows ONCE, then maintain the working set in memory as we
+        # process the batch (previously this re-scanned the whole table per item,
+        # making ingestion O(n*m)).
+        current = [r for r in _scan_rows(table) if r.get("is_current")]
+
         for item in items:
             rec = _record_from_seed(item)
-            rows = _scan_rows(table)
-            current = [r for r in rows if r.get("is_current")]
 
             if not force and any(
                 r.get("content_hash") == rec["content_hash"] for r in current
@@ -230,10 +233,9 @@ def upsert_versioned(
                 for r in current
                 if r.get("provenance_url") == rec["provenance_url"]
                 and r.get("heading") == rec["heading"]
+                and r["id"] != rec["id"]
             ]
             for old_id in lineage_ids:
-                if old_id == rec["id"]:
-                    continue
                 table.update(
                     where=f"id = '{old_id}'",
                     values={
@@ -243,9 +245,13 @@ def upsert_versioned(
                     },
                 )
                 superseded += 1
+            if lineage_ids:
+                superseded_set = set(lineage_ids)
+                current = [r for r in current if r["id"] not in superseded_set]
 
             rec["vector"] = embed(rec["text"])
             table.add([rec])
+            current.append(rec)  # reflect the insert for subsequent items in the batch
             ingested += 1
 
     cache.bump_generation()
@@ -317,12 +323,25 @@ def query_architect_db(
 
     config = read_config()
     query_vector = embed(query)
+    # Push structured, exact-match filters (pillar/maturity) into the vector
+    # prefilter so they constrain the candidate set BEFORE the top-k cut. Filtering
+    # these in Python after the fetch could return fewer than top_k results even
+    # when matching rows exist (they may fall outside the over-fetched window).
+    # api_version stays a Python filter because it needs tolerant v-prefix/.0
+    # normalization that a plain SQL equality cannot express.
+    clauses = ["is_current = true"]
+    if pillar and pillar in PILLARS:
+        clauses.append(f"pillar = '{pillar}'")
+    if maturity and maturity in MATURITIES:
+        clauses.append(f"maturity = '{maturity}'")
+    where = " AND ".join(clauses)
+
     # Over-fetch, then apply tolerant filtering / trust-blended ranking in Python.
     fetch_k = max(top_k * 4, top_k)
     hits = (
         table.search(query_vector)
         .metric("cosine")
-        .where("is_current = true", prefilter=True)
+        .where(where, prefilter=True)
         .limit(fetch_k)
         .to_list()
     )

@@ -51,14 +51,54 @@ export async function findUv(): Promise<string | null> {
   return null;
 }
 
-/** True if the engine package is already installed as a uv tool. */
+/** PEP 503 normalized distribution name (case-insensitive, - _ . collapsed). */
+function normalizePkgName(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[-_.]+/g, "-");
+}
+
+/** Extract the bare distribution name from a spec like `pkg==1.2.3` or a path. */
+function baseEnginePackageName(): string | null {
+  const spec = getEnginePackage();
+  // A local path or wheel install can't be matched by name reliably.
+  if (spec.includes("/") || spec.includes("\\") || spec.endsWith(".whl")) {
+    return null;
+  }
+  const match = spec.match(/^[A-Za-z0-9][A-Za-z0-9._-]*/);
+  return match ? match[0] : null;
+}
+
+/**
+ * True if the engine package is installed as a uv tool. Parses `uv tool list`
+ * (each tool is a non-indented `name vX.Y.Z` line, followed by indented `- script`
+ * lines) and matches the distribution name exactly rather than doing a loose
+ * substring test that could false-match another tool or a console-script name.
+ */
 export async function isEngineInstalled(uvPath: string): Promise<boolean> {
   try {
     const res = await exec(uvPath, ["tool", "list"]);
     if (res.code !== 0) {
       return false;
     }
-    return res.stdout.toLowerCase().includes(getEnginePackage().toLowerCase());
+    const base = baseEnginePackageName();
+    if (!base) {
+      // Non-name spec (local path/wheel): fall back to a substring check.
+      return res.stdout.toLowerCase().includes(getEnginePackage().toLowerCase());
+    }
+    const target = normalizePkgName(base);
+    for (const line of res.stdout.split(/\r?\n/)) {
+      // Skip blank lines and the indented `- script` entries under each tool.
+      if (!line.trim() || /^\s/.test(line) || line.trimStart().startsWith("-")) {
+        continue;
+      }
+      const firstToken = line.trim().split(/\s+/)[0];
+      if (firstToken && normalizePkgName(firstToken) === target) {
+        return true;
+      }
+    }
+    return false;
   } catch {
     return false;
   }

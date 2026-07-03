@@ -26,13 +26,22 @@ DEFAULT_CONFIG = """\
 # sf-local-architect configuration
 deliverable_preference: mermaid          # mermaid | drawio
 embedding_model: BAAI/bge-small-en-v1.5
-reranker_enabled: false
-reranker_model: BAAI/bge-reranker-v2-m3
+reranker_enabled: true                   # cross-encoder rerank for higher precision
+reranker_model: Xenova/ms-marco-MiniLM-L-6-v2   # small (~80 MB), fastembed-supported
 source_trust:                            # per-domain overrides (Gap 3)
+  developer.salesforce.com: 100
   help.salesforce.com: 100
   architect.salesforce.com: 95
   default: 60
-scrape_allowlist: []                     # P0 for Gap 5; empty = scraping disabled
+# Domains that `sync_latest_patterns` is permitted to scrape. Pre-seeded with the
+# official Salesforce documentation domains only; every fetch still passes through
+# SSRF validation, HTML sanitization, and the prompt-injection guard, and content
+# is stored as untrusted reference data. Remove entries to disable, or add your own
+# trusted docs domain. Set to [] to disable scraping entirely.
+scrape_allowlist:
+  - developer.salesforce.com
+  - architect.salesforce.com
+  - help.salesforce.com
 """
 
 
