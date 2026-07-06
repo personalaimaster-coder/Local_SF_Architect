@@ -3,16 +3,25 @@
 # Loaded into LanceDB by `sf-architect seed` via engines/patterns.load_patterns_seed.
 #
 # Source references: all provenance_url values point to official Salesforce
-# developer or architect documentation that was live as of 2026-06-20.
+# developer or architect documentation. Knowledge is tagged to the current
+# release (Summer '26 / API v67.0); best-practice values below are stable across
+# recent releases.
 #
-# Coverage: 18 patterns across all four Well-Architected pillars.
-#   Security     (5): CRUD/FLS, sharing keywords, least privilege, named
-#                     credentials, org-wide defaults
-#   Reliability  (5): idempotent callouts, queueable async, platform events,
-#                     error handling, scale testing
-#   Scalability  (5): bulkification, one-trigger-per-object, no SOQL/DML in
-#                     loops, data skew, map-based consolidation
-#   Performance  (3): platform cache, selective SOQL, async for heavy work
+# Coverage: 78 patterns across the four Well-Architected pillars, spanning the
+# original core plus expanded coverage of integration, data/large-data-volumes,
+# automation (Flow vs Apex vs Trigger), Lightning/front-end, DevOps/ALM, and
+# testing.
+#   Security     : CRUD/FLS, sharing, least privilege, named credentials,
+#                  OWD/sharing model, Shield, SOQL injection, secrets, guest user
+#   Reliability  : idempotent callouts, queueable, platform events, error
+#                  handling, scale testing, integration patterns, retries
+#   Scalability  : bulkification, one-trigger-per-object, no SOQL/DML in loops,
+#                  data skew, maps, LDV, indexing, big objects, archiving
+#   Performance  : platform cache, selective SOQL, async, LWC/UI performance
+#
+# Pillars are constrained to the four the engine understands (Security,
+# Reliability, Scalability, Performance); cross-cutting topics (DevOps, testing,
+# maintainability) are mapped onto the closest pillar.
 #
 # Each pattern's id is derived at load time from:
 #   sha1(provenance_url + heading + knowledge_version)
@@ -34,8 +43,8 @@ patterns:
       statements per synchronous transaction; placing either inside a loop exhausts
       those limits at 100–150 records. Always collect IDs in a Set, run one query
       outside the loop, and execute one bulk DML on a List.
-    api_version: "62.0"
-    knowledge_version: "v62"
+    api_version: "67.0"
+    knowledge_version: "v67"
     source_type: official_docs
     source_trust: 100
     provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_gov_limits.htm"
@@ -52,8 +61,8 @@ patterns:
       with a handler pattern (e.g., AccountTriggerHandler) provides a single, auditable
       entry point for all automations on that object, simplifies testing, and reduces
       the risk of runaway recursion.
-    api_version: "62.0"
-    knowledge_version: "v62"
+    api_version: "67.0"
+    knowledge_version: "v67"
     source_type: community_blog
     source_trust: 85
     provenance_url: "https://developer.salesforce.com/blogs/2015/01/apex-best-practices-15-apex-commandments"
@@ -70,8 +79,8 @@ patterns:
       DML are inside the loop. Collect record IDs in a Set, execute one bulk SOQL
       outside the loop using the IN :setVar pattern, process the Map result in the
       loop, then execute one DML on the aggregated List after the loop.
-    api_version: "62.0"
-    knowledge_version: "v62"
+    api_version: "67.0"
+    knowledge_version: "v67"
     source_type: official_docs
     source_trust: 100
     provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_gov_limits.htm"
@@ -89,8 +98,8 @@ patterns:
       Scale Test to simulate production data shapes before go-live. Define a data
       lifecycle policy to archive or purge aging records that no longer provide
       business value.
-    api_version: "62.0"
-    knowledge_version: "v62"
+    api_version: "67.0"
+    knowledge_version: "v67"
     source_type: architect_site
     source_trust: 95
     provenance_url: "https://architect.salesforce.com/docs/architect/well-architected/guide/reliable"
@@ -107,8 +116,8 @@ patterns:
       avoids requerying the same object multiple times within a single transaction
       when the same related records are needed by different methods in a trigger
       handler chain.
-    api_version: "62.0"
-    knowledge_version: "v62"
+    api_version: "67.0"
+    knowledge_version: "v67"
     source_type: community_blog
     source_trust: 85
     provenance_url: "https://developer.salesforce.com/blogs/2015/01/apex-best-practices-15-apex-commandments"
@@ -130,8 +139,8 @@ patterns:
       FLS. Use Security.stripInaccessible to remove inaccessible fields from query
       results before returning data to the caller. Failure to enforce FLS can expose
       sensitive fields to users who should not see them.
-    api_version: "62.0"
-    knowledge_version: "v62"
+    api_version: "67.0"
+    knowledge_version: "v67"
     source_type: official_docs
     source_trust: 100
     provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_classes_enforce_usermode.htm"
@@ -149,8 +158,8 @@ patterns:
       Note that sharing keywords do not enforce field-level security or CRUD — those
       must be enforced separately. Apex triggers run implicitly without sharing but
       database operations within their bodies default to user mode.
-    api_version: "62.0"
-    knowledge_version: "v62"
+    api_version: "67.0"
+    knowledge_version: "v67"
     source_type: official_docs
     source_trust: 100
     provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_classes_keywords_sharing.htm"
@@ -168,8 +177,8 @@ patterns:
       clear business requirement dictates otherwise, and open access up with sharing
       rules and manual shares. Avoid over-engineered sharing schemes — complex rules
       cause performance issues and make the model hard to audit.
-    api_version: "62.0"
-    knowledge_version: "v62"
+    api_version: "67.0"
+    knowledge_version: "v67"
     source_type: architect_site
     source_trust: 95
     provenance_url: "https://architect.salesforce.com/docs/architect/well-architected/guide/secure"
@@ -188,8 +197,8 @@ patterns:
       version control. The extensible named credential model introduced in Winter
       '23 supersedes legacy named credentials; use it for all new callout designs
       as legacy named credentials are deprecated.
-    api_version: "62.0"
-    knowledge_version: "v62"
+    api_version: "67.0"
+    knowledge_version: "v67"
     source_type: official_docs
     source_trust: 100
     provenance_url: "https://developer.salesforce.com/docs/platform/named-credentials/guide/get-started.html"
@@ -207,8 +216,8 @@ patterns:
       non-sensitive data sharing is genuinely required. Use Transaction Security
       policies and Real-Time Event Monitoring (Salesforce Shield) for high-sensitivity
       applications that require detection and response to suspicious access patterns.
-    api_version: "62.0"
-    knowledge_version: "v62"
+    api_version: "67.0"
+    knowledge_version: "v67"
     source_type: architect_site
     source_trust: 95
     provenance_url: "https://architect.salesforce.com/docs/architect/well-architected/guide/secure"
@@ -229,8 +238,8 @@ patterns:
       work in a Queueable or Batch Apex job so transient network failures can be
       retried without data loss. Always handle non-200 HTTP responses explicitly and
       log or alert on retry exhaustion rather than silently swallowing failures.
-    api_version: "62.0"
-    knowledge_version: "v62"
+    api_version: "67.0"
+    knowledge_version: "v67"
     source_type: official_docs
     source_trust: 100
     provenance_url: "https://developer.salesforce.com/docs/platform/named-credentials/guide/get-started.html"
@@ -249,8 +258,8 @@ patterns:
       1 per asynchronous context. Use queueable chaining (re-enqueue from the
       execute method) for long-running multi-step operations that exceed the single
       execution limits.
-    api_version: "62.0"
-    knowledge_version: "v62"
+    api_version: "67.0"
+    knowledge_version: "v67"
     source_type: official_docs
     source_trust: 100
     provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexref.meta/apexref/apex_class_System_Queueable.htm"
@@ -270,8 +279,8 @@ patterns:
       Publish-After-Commit events (default) for transactional consistency; use
       Publish-Immediately events only when low latency is critical and idempotency
       is guaranteed.
-    api_version: "62.0"
-    knowledge_version: "v62"
+    api_version: "67.0"
+    knowledge_version: "v67"
     source_type: official_docs
     source_trust: 100
     provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.platform_events.meta/platform_events/platform_events_intro.htm"
@@ -289,8 +298,8 @@ patterns:
       to avoid hiding unrelated faults. Never let a raw exception propagate across the
       MCP or API boundary — always return a structured error response so callers can
       handle failures gracefully without seeing an uncontrolled stack trace.
-    api_version: "62.0"
-    knowledge_version: "v62"
+    api_version: "67.0"
+    knowledge_version: "v67"
     source_type: official_docs
     source_trust: 100
     provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_gov_limits.htm"
@@ -309,8 +318,8 @@ patterns:
       failures early. Conduct risk assessments before major releases or seasonal
       spikes, and test failure mitigation plans periodically so recovery procedures
       are validated rather than theoretical.
-    api_version: "62.0"
-    knowledge_version: "v62"
+    api_version: "67.0"
+    knowledge_version: "v67"
     source_type: architect_site
     source_trust: 95
     provenance_url: "https://architect.salesforce.com/docs/architect/well-architected/guide/reliable"
@@ -333,8 +342,8 @@ patterns:
       Platform Cache takes under 10 ms vs. a database round-trip, significantly
       reducing CPU time and improving user-facing latency. Set appropriate TTL values
       and handle cache misses gracefully to avoid NullPointerExceptions.
-    api_version: "62.0"
-    knowledge_version: "v62"
+    api_version: "67.0"
+    knowledge_version: "v67"
     source_type: community_blog
     source_trust: 85
     provenance_url: "https://developer.salesforce.com/blogs/2020/06/caching-in-the-salesforce-platform"
@@ -353,8 +362,8 @@ patterns:
       SELECT Id, Name rather than SELECT * — to reduce heap usage and data transfer.
       Use ApexGuru to proactively detect and fix non-selective patterns before they
       cause production failures.
-    api_version: "62.0"
-    knowledge_version: "v62"
+    api_version: "67.0"
+    knowledge_version: "v67"
     source_type: official_docs
     source_trust: 100
     provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_gov_limits.htm"
@@ -373,10 +382,1145 @@ patterns:
       (default 200) and resets governor limits for each execute() invocation. This
       pattern is the primary tool for processing high-volume data loads, complex
       multi-step integrations, and background maintenance jobs.
-    api_version: "62.0"
-    knowledge_version: "v62"
+    api_version: "67.0"
+    knowledge_version: "v67"
     source_type: official_docs
     source_trust: 100
     provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_gov_limits.htm"
     pillar: Performance
     maturity: tried-and-true
+
+  # ===========================================================================
+  # INTEGRATION
+  # ===========================================================================
+
+  - title: "Choose the Right Integration Pattern"
+    heading: "Integration Pattern Selection"
+    text: >
+      Select an integration pattern based on timing (synchronous vs asynchronous),
+      direction (inbound, outbound, bidirectional), and data volume rather than
+      defaulting to point-to-point callouts. Salesforce documents six core patterns:
+      Remote Process Invocation (Request-Reply and Fire-and-Forget), Batch Data
+      Synchronization, Remote Call-In, UI Update Based on Data Changes, and Data
+      Virtualization. Use Request-Reply when the caller needs an immediate response,
+      Fire-and-Forget (platform events) when it does not, and Batch Data Sync for
+      large periodic loads. Documenting the chosen pattern per interface prevents an
+      unmaintainable web of ad-hoc integrations.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.integration_patterns_and_practices.meta/integration_patterns_and_practices/integ_pat_intro_overview.htm"
+    pillar: Reliability
+    maturity: tried-and-true
+
+  - title: "Use the Pub/Sub API for Event Streaming"
+    heading: "Pub/Sub API Event Streaming"
+    text: >
+      Use the Pub/Sub API (gRPC, HTTP/2) as the modern, efficient channel for
+      publishing and subscribing to platform events and Change Data Capture events
+      from external systems. It replaces the older CometD/Streaming API with binary
+      Avro payloads, flow-controlled subscriptions, and the ability to replay events
+      from a stored offset within the 72-hour retention window. Subscribers request
+      a specific number of events so a slow consumer is never overwhelmed. Prefer
+      Pub/Sub API over long-polling CometD for all new event-driven integrations.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/platform/pub-sub-api/guide/intro.html"
+    pillar: Reliability
+    maturity: proven
+
+  - title: "Stream Data Changes with Change Data Capture"
+    heading: "Change Data Capture"
+    text: >
+      Use Change Data Capture (CDC) to publish near-real-time change events (create,
+      update, delete, undelete) for Salesforce records to external systems without
+      polling. CDC events carry only the changed fields plus header metadata, are
+      delivered through the event bus, and support replay for up to three days. This
+      keeps an external data warehouse or cache in sync without repeated full
+      extracts and without custom trigger-and-callout code. Enable CDC selectively
+      per object to avoid unnecessary event volume, and design subscribers to be
+      idempotent since events may be redelivered.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.change_data_capture.meta/change_data_capture/cdc_intro.htm"
+    pillar: Reliability
+    maturity: proven
+
+  - title: "Load Large Data Sets with Bulk API 2.0"
+    heading: "Bulk API 2.0 for Large Loads"
+    text: >
+      Use Bulk API 2.0 for inserting, updating, upserting, or deleting large volumes
+      of records (tens of thousands to millions) asynchronously. Unlike the SOAP or
+      REST row-by-row APIs, Bulk API 2.0 automatically batches the job server-side,
+      processes records in parallel, and returns success and failure result sets you
+      can download. It is the correct tool for data migrations and nightly loads,
+      keeping the work off synchronous transaction limits. For very large extractions,
+      combine it with PK chunking. Avoid loading large volumes through standard DML
+      in Apex or the REST composite API, which will exhaust governor limits.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.api_asynch.meta/api_asynch/asynch_api_intro.htm"
+    pillar: Scalability
+    maturity: tried-and-true
+
+  - title: "Reduce API Round Trips with the Composite API"
+    heading: "Composite API to Reduce Round Trips"
+    text: >
+      Use the REST Composite resources (composite, composite/batch, and
+      composite/sobjects/tree) to combine multiple related operations into a single
+      HTTP request, reducing network round trips and improving integration latency.
+      A composite request can create a parent and its children in one call and
+      reference the result of an earlier subrequest in a later one. This is
+      especially valuable for chatty external clients on high-latency connections.
+      Respect the per-composite subrequest limits and treat the whole request as a
+      unit of work with allOrNone semantics where atomicity matters.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/resources_composite.htm"
+    pillar: Performance
+    maturity: proven
+
+  - title: "Handle Long-Running Callouts with Continuations"
+    heading: "Continuations for Long-Running Callouts"
+    text: >
+      Use the Continuation pattern for Visualforce or Lightning requests that make
+      long-running callouts to external web services so the callout runs
+      asynchronously and the application server thread is released while waiting for
+      the response. This avoids tying up server capacity and hitting the synchronous
+      response timeout. Continuations support up to three parallel callouts per
+      request. For pure server-to-server integration without a UI, prefer Queueable
+      Apex with callouts instead, and always set explicit callout timeouts.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_continuation_overview.htm"
+    pillar: Reliability
+    maturity: proven
+
+  - title: "Avoid Point-to-Point Sprawl with Middleware"
+    heading: "Middleware for Integration Decoupling"
+    text: >
+      For enterprises with many systems, route integrations through an integration
+      layer or ESB (such as MuleSoft) using an API-led connectivity approach rather
+      than building direct point-to-point connections between every pair of systems.
+      Point-to-point integrations create an unmaintainable mesh where one endpoint
+      change ripples across many custom callouts. A middleware layer centralizes
+      transformation, orchestration, retry, and monitoring, and exposes reusable
+      system, process, and experience APIs. Reserve direct Salesforce callouts for
+      simple, low-volume, or genuinely one-off integrations.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: architect_site
+    source_trust: 95
+    provenance_url: "https://architect.salesforce.com/decision-guides/integrate-systems"
+    pillar: Reliability
+    maturity: proven
+
+  - title: "Access External Data with Salesforce Connect"
+    heading: "Salesforce Connect External Objects"
+    text: >
+      Use Salesforce Connect and external objects (OData 2.0/4.0 or a custom Apex
+      adapter) to access data that lives in an external system in real time without
+      copying it into Salesforce. This data-virtualization pattern is appropriate
+      when the data set is very large, must remain in the system of record, or
+      changes too frequently to replicate. Users see external objects much like
+      standard objects, but queries are federated to the remote source at runtime.
+      Weigh the per-query latency and callout limits against the cost of replicating
+      and storing the data locally.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_connector_start.htm"
+    pillar: Scalability
+    maturity: proven
+
+  - title: "Build Declarative Integrations with External Services"
+    heading: "External Services for Declarative Callouts"
+    text: >
+      Register an external REST API with External Services by importing its
+      OpenAPI/Swagger schema so its operations become invocable actions available to
+      Flow and other declarative tools without writing Apex. This lets admins
+      orchestrate outbound calls, keeps the integration contract explicit and
+      version-controlled, and reduces bespoke callout code that must be tested and
+      maintained. Pair it with a Named Credential for authentication. For complex
+      request/response transformation beyond the schema, fall back to Apex.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_ext_serv_overview.htm"
+    pillar: Reliability
+    maturity: proven
+
+  - title: "Use External IDs and Upsert for Integration Keys"
+    heading: "External IDs for Upsert Integrations"
+    text: >
+      Define an indexed External ID field on objects that are synchronized from an
+      external system and use upsert keyed on that field so inbound integrations do
+      not create duplicates and do not require a prior query to resolve Salesforce
+      record Ids. Upsert on an External ID is idempotent: re-sending the same record
+      updates rather than duplicates it. This is the standard mechanism for keeping
+      a Salesforce object aligned with an external system of record and for resolving
+      parent references by external key during bulk loads.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/sforce_api_calls_upsert.htm"
+    pillar: Reliability
+    maturity: tried-and-true
+
+  # ===========================================================================
+  # DATA ARCHITECTURE / LARGE DATA VOLUMES
+  # ===========================================================================
+
+  - title: "Design for Large Data Volumes"
+    heading: "Large Data Volume Design"
+    text: >
+      When objects will hold millions of records, design explicitly for Large Data
+      Volumes (LDV): keep queries selective, avoid ownership and lookup skew, reduce
+      the number of records scanned, and archive data that is no longer active. LDV
+      problems manifest as slow reports, non-selective query errors, sharing
+      recalculation delays, and lock contention. Plan the data model, indexing, and
+      sharing architecture up front because retrofitting them after data has grown is
+      expensive. Test with production-scale data in a Full sandbox before go-live.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.salesforce_large_data_volumes_bp.meta/salesforce_large_data_volumes_bp/ldv_deployments_introduction.htm"
+    pillar: Scalability
+    maturity: tried-and-true
+
+  - title: "Create Custom Indexes for Query Selectivity"
+    heading: "Custom Indexes for Selectivity"
+    text: >
+      Ensure fields used in the WHERE clauses of high-volume queries are indexed so
+      the query optimizer can select rows efficiently instead of scanning the whole
+      table. Standard fields such as Id, Name, OwnerId, CreatedDate, and lookup and
+      master-detail relationship fields are indexed automatically; for other filter
+      fields, request a custom index (External ID and Unique fields are indexed).
+      A query is selective only when its filters match a small enough fraction of
+      rows relative to the selectivity thresholds. On large objects, a non-selective
+      query can exceed the query timeout, so verify selectivity with the Query Plan
+      tool.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.salesforce_large_data_volumes_bp.meta/salesforce_large_data_volumes_bp/ldv_deployments_techniques_indexes.htm"
+    pillar: Performance
+    maturity: tried-and-true
+
+  - title: "Request Skinny Tables for Read-Heavy Large Objects"
+    heading: "Skinny Tables for Read Performance"
+    text: >
+      For read-heavy reports and list views on objects with millions of records,
+      consider a skinny table: a Salesforce-maintained copy that contains a subset
+      of frequently used fields and avoids the join between the base and custom-field
+      tables. Skinny tables are kept in sync automatically and can dramatically speed
+      up queries and reports. They are enabled by Salesforce Support and have
+      restrictions (limited field count, no cross-object fields), so treat them as a
+      targeted optimization after indexing and query tuning rather than a first
+      resort.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.salesforce_large_data_volumes_bp.meta/salesforce_large_data_volumes_bp/ldv_deployments_techniques_skinny_tables.htm"
+    pillar: Performance
+    maturity: proven
+
+  - title: "Archive Historical Data with Big Objects"
+    heading: "Big Objects for Archival"
+    text: >
+      Use Big Objects to store hundreds of millions or billions of records (such as
+      historical transactions, audit trails, or IoT data) outside the standard
+      object storage limits while keeping the data queryable. Big Objects use a
+      defined index for access and are queried with Async SOQL or SOQL on the index
+      fields; they are not suited to ad-hoc transactional updates. Move aging records
+      from standard objects into Big Objects to keep the transactional objects small,
+      selective, and performant while retaining long-term data for compliance and
+      analytics.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.bigobjects.meta/bigobjects/big_object.htm"
+    pillar: Scalability
+    maturity: proven
+
+  - title: "Define a Data Archiving and Lifecycle Policy"
+    heading: "Data Archiving and Lifecycle"
+    text: >
+      Establish a data lifecycle policy that defines how long each object's records
+      remain active, when they are archived, and when they are purged. Continuously
+      growing objects degrade query selectivity, sharing recalculation, and backup
+      times. Move inactive records to Big Objects or an external store, delete truly
+      obsolete data, and use hard deletes plus emptying the recycle bin for very
+      large purges. A documented retention policy also supports privacy and
+      compliance obligations. Schedule archiving as off-peak asynchronous jobs to
+      avoid impacting users.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: architect_site
+    source_trust: 95
+    provenance_url: "https://architect.salesforce.com/docs/architect/well-architected/guide/reliable"
+    pillar: Scalability
+    maturity: proven
+
+  - title: "Extract Large Data Sets with PK Chunking"
+    heading: "PK Chunking for Extraction"
+    text: >
+      When extracting millions of records with the Bulk API, enable PK chunking so
+      the platform splits the query into manageable chunks based on record Id ranges
+      rather than attempting one massive selective query. This avoids query timeouts
+      on very large objects and lets chunks be processed in parallel. Choose a chunk
+      size appropriate to the object and downstream consumer. PK chunking is the
+      recommended technique for full extracts of large objects into a data warehouse
+      or backup system.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.api_asynch.meta/api_asynch/async_api_headers_enable_pk_chunking.htm"
+    pillar: Scalability
+    maturity: proven
+
+  - title: "Defer Sharing Recalculation During Bulk Loads"
+    heading: "Defer Sharing Calculation on Loads"
+    text: >
+      For very large data loads that would trigger expensive sharing recalculation,
+      use deferred sharing calculation (Group Membership and sharing rule
+      recalculation) so the load completes quickly and sharing is recalculated once
+      afterward instead of continuously during the load. Combined with loading in
+      Id order, disabling unnecessary automation, and using the Bulk API, this
+      significantly reduces load time and lock contention for LDV migrations. Re-enable
+      and complete sharing recalculation in a controlled window and validate access
+      before exposing the data to users.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.salesforce_large_data_volumes_bp.meta/salesforce_large_data_volumes_bp/ldv_deployments_techniques_deferring_sharing_calculations.htm"
+    pillar: Scalability
+    maturity: proven
+
+  - title: "Model Relationships to Avoid Skew and Deep Hierarchies"
+    heading: "Relationship and Data Modeling"
+    text: >
+      Design object relationships deliberately: choose master-detail when tight
+      ownership and roll-up summaries are required, and lookup when the child can
+      exist independently. Avoid excessively deep master-detail hierarchies and
+      objects with a single overloaded parent, which cause lock contention and
+      complex sharing. Denormalize sparingly for performance only when justified.
+      Keep the number of fields, record types, and relationships on hot objects
+      manageable so triggers, queries, and page loads stay within limits and remain
+      easy to reason about.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: architect_site
+    source_trust: 95
+    provenance_url: "https://architect.salesforce.com/docs/architect/well-architected/guide/adaptable"
+    pillar: Scalability
+    maturity: proven
+
+  # ===========================================================================
+  # AUTOMATION (Flow vs Apex vs Trigger)
+  # ===========================================================================
+
+  - title: "Choose Between Flow, Apex, and Triggers Intentionally"
+    heading: "Flow vs Apex vs Trigger Decision"
+    text: >
+      Choose the automation tool by fit, not habit: use record-triggered Flows for
+      most declarative record automation, use Apex triggers when logic is complex,
+      requires bulk algorithmic control, must call out with fine-grained error
+      handling, or manipulates data Flow cannot, and use Flow orchestration or
+      invocable Apex to combine both. Salesforce guidance favors low-code Flow for
+      maintainability, dropping to Apex when Flow becomes convoluted or cannot meet
+      the requirement. Document the decision per object and avoid mixing multiple
+      overlapping automation tools that fire in an unpredictable order.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: architect_site
+    source_trust: 95
+    provenance_url: "https://architect.salesforce.com/decision-guides/trigger-automation"
+    pillar: Scalability
+    maturity: proven
+
+  - title: "Follow Record-Triggered Flow Best Practices"
+    heading: "Record-Triggered Flow Best Practices"
+    text: >
+      Build record-triggered Flows to be bulk-safe and efficient: use the
+      before-save flow type for same-record field updates to avoid an extra DML and
+      recursive save, keep one record-triggered flow per object per timing where
+      possible, and use entry conditions so the flow only runs when relevant. Avoid
+      DML and get elements inside loops, and move complex or high-volume logic to
+      invocable Apex. Never place a Get/Create/Update/Delete element inside a loop —
+      it multiplies queries and DML exactly like SOQL in an Apex loop.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: architect_site
+    source_trust: 95
+    provenance_url: "https://architect.salesforce.com/decision-guides/trigger-automation"
+    pillar: Scalability
+    maturity: proven
+
+  - title: "Use Before-Save Automation for Same-Record Updates"
+    heading: "Before-Save Automation Context"
+    text: >
+      When automation only needs to set fields on the record being saved, run it in
+      the before-save context (a before-save record-triggered Flow or a before
+      insert/update Apex trigger) so the values are written as part of the same DML
+      without an additional update statement. Before-save flows are significantly
+      faster than after-save updates on the same record because they avoid a second
+      save and the recursion it can cause. Reserve after-save automation for actions
+      that need the record Id, related records, or cross-object updates.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://help.salesforce.com/s/articleView?id=platform.flow_concepts_trigger_fast_field_update.htm&type=5"
+    pillar: Performance
+    maturity: proven
+
+  - title: "Guard Against Recursive Automation"
+    heading: "Prevent Recursive Automation"
+    text: >
+      Prevent automation from re-triggering itself into an infinite or excessive
+      loop: use a static Boolean or a static Set of processed record Ids in an Apex
+      trigger handler to ensure logic runs once per record per transaction, and be
+      careful with Flows that update records which re-enter the same trigger. Uncontrolled
+      recursion exhausts the 16-level trigger stack depth, wastes CPU and DML, and
+      produces hard-to-diagnose double updates. Combine recursion control with a
+      single trigger-per-object handler so the guard has one clear place to live.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: community_blog
+    source_trust: 85
+    provenance_url: "https://developer.salesforce.com/blogs/2015/01/apex-best-practices-15-apex-commandments"
+    pillar: Reliability
+    maturity: tried-and-true
+
+  - title: "Call Apex from Flow with Invocable Methods"
+    heading: "Invocable Apex from Flow"
+    text: >
+      Expose reusable Apex logic to declarative tools with @InvocableMethod so Flows
+      can call it for the parts a Flow cannot do well (complex computation, callouts
+      with custom retry, advanced data manipulation) while admins own the
+      orchestration. Design invocable methods to accept and return Lists so they are
+      bulk-safe when a record-triggered Flow processes many records at once. This
+      hybrid keeps low-code where it is maintainable and drops to code only where it
+      adds real value, rather than rewriting whole processes in Apex.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_classes_annotation_InvocableMethod.htm"
+    pillar: Reliability
+    maturity: proven
+
+  - title: "Consolidate Automation to One Type Per Object"
+    heading: "One Automation Type Per Object"
+    text: >
+      Avoid stacking multiple overlapping automation tools (workflow rules, process
+      builder, several record-triggered flows, and Apex triggers) on the same object,
+      because their combined execution order is hard to predict and debug. Migrate
+      legacy Workflow Rules and Process Builder to record-triggered Flows or Apex,
+      and consolidate logic into a single, ordered entry point per object and timing.
+      A predictable, documented automation stack reduces regressions and makes the
+      order-of-execution reasoning tractable.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: architect_site
+    source_trust: 95
+    provenance_url: "https://architect.salesforce.com/decision-guides/trigger-automation"
+    pillar: Scalability
+    maturity: proven
+
+  - title: "Offload Heavy Flow Work to Asynchronous Paths"
+    heading: "Asynchronous Paths for Automation"
+    text: >
+      When a record-triggered Flow must perform slow work such as callouts or
+      high-volume processing, use the scheduled (asynchronous) path or hand off to
+      invocable Queueable Apex so the user-facing save is not blocked and synchronous
+      limits are not exceeded. Running callouts or large loops synchronously inside a
+      save transaction risks timeouts and limit errors. Deferring the heavy work
+      keeps the interactive transaction fast and lets the asynchronous context use
+      higher governor limits.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://help.salesforce.com/s/articleView?id=platform.flow_concepts_trigger.htm&type=5"
+    pillar: Reliability
+    maturity: proven
+
+  # ===========================================================================
+  # LIGHTNING / FRONT-END
+  # ===========================================================================
+
+  - title: "Prefer Lightning Web Components Over Aura"
+    heading: "Prefer LWC Over Aura"
+    text: >
+      Build new UI with Lightning Web Components rather than the older Aura framework.
+      LWC is built on modern web standards (custom elements, shadow DOM, ES modules),
+      renders faster, uses less memory, and produces smaller, more maintainable code.
+      Aura remains only for the few capabilities not yet available in LWC, and Aura
+      and LWC can interoperate during migration. Standardizing on LWC improves
+      performance and aligns the codebase with Salesforce's strategic direction and
+      Lightning Web Security.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/platform/lwc/guide/introduction.html"
+    pillar: Performance
+    maturity: tried-and-true
+
+  - title: "Use Lightning Data Service Instead of Apex for CRUD"
+    heading: "Lightning Data Service for Record CRUD"
+    text: >
+      Use Lightning Data Service (the lightning/uiRecordApi module, lightning-record-form,
+      and record-edit/view forms) to read and write single records in LWC without
+      writing Apex or SOQL. LDS shares a client-side cache across components, enforces
+      FLS and sharing automatically, and keeps records in sync when they change,
+      reducing server round trips and custom controller code. Reserve Apex for
+      operations LDS cannot express, such as multi-record transactions, complex
+      queries, or aggregations.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/platform/lwc/guide/data-ui-api.html"
+    pillar: Performance
+    maturity: proven
+
+  - title: "Cache Read-Only Apex Data with @wire and cacheable=true"
+    heading: "Cacheable Apex for LWC"
+    text: >
+      Mark read-only Apex methods called from LWC with @AuraEnabled(cacheable=true)
+      and consume them with the @wire service so results are cached on the client and
+      refreshed reactively when parameters change. Cacheable methods must not perform
+      DML and enable the Lightning platform to serve repeated reads from cache,
+      cutting server calls and improving perceived performance. Use refreshApex to
+      invalidate the cache after a mutation. For imperative writes, call a separate,
+      non-cacheable Apex method.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/platform/lwc/guide/apex-wire-method.html"
+    pillar: Performance
+    maturity: proven
+
+  - title: "Paginate and Lazy-Load Large Lists in the UI"
+    heading: "LWC Pagination and Lazy Loading"
+    text: >
+      Do not load thousands of rows into a component at once. Query and render data
+      in pages using SOQL OFFSET/LIMIT or keyset pagination, and lazy-load additional
+      rows on scroll or on demand (for example, with lightning-datatable's
+      enableInfiniteLoading). This keeps queries selective, reduces heap and DOM
+      size, and keeps the component responsive on large data sets. Combine with
+      server-side filtering and sorting so the client never has to hold or process
+      the full result set.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/component-library/bundle/lightning-datatable/documentation"
+    pillar: Performance
+    maturity: proven
+
+  - title: "Enforce Object and Field Security in @AuraEnabled Apex"
+    heading: "AuraEnabled Apex Security"
+    text: >
+      Apex controllers exposed to Lightning components with @AuraEnabled run in the
+      user's context but do not automatically enforce CRUD/FLS, so explicitly enforce
+      it: run SOQL WITH USER_MODE, pass AccessLevel.USER_MODE to Database operations,
+      or use Security.stripInaccessible, and declare with sharing on the controller.
+      Client-side code is fully inspectable, so never rely on the UI to hide data or
+      block actions. Validate inputs and authorization on the server for every
+      @AuraEnabled method.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_classes_annotation_AuraEnabled.htm"
+    pillar: Security
+    maturity: tried-and-true
+
+  - title: "Decouple Components with Lightning Message Service"
+    heading: "Component Communication Patterns"
+    text: >
+      Communicate between components using the right mechanism: pass data down to
+      children with @api properties, bubble information up with custom events, and use
+      Lightning Message Service (LMS) to communicate across components that are not in
+      the same DOM hierarchy (including across Aura and LWC). Avoid tight coupling
+      through global variables or direct DOM traversal. Clear, event-driven
+      communication keeps components reusable and testable and prevents brittle
+      cross-component dependencies.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/platform/lwc/guide/use-message-channel.html"
+    pillar: Reliability
+    maturity: proven
+
+  - title: "Minimize Server Calls and Reactive Re-Renders in LWC"
+    heading: "LWC Rendering Performance"
+    text: >
+      Keep Lightning pages fast by minimizing Apex calls (batch related reads,
+      cache with @wire, and avoid calling Apex in loops), by keeping reactive
+      property graphs small so the framework does not re-render unnecessarily, and by
+      deferring non-critical work. Use getters instead of expensive expressions in
+      templates, and avoid large synchronous computations on the main thread. Fewer,
+      coarser server round trips and lean reactive state produce a noticeably more
+      responsive experience, especially on record pages with many components.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/platform/lwc/guide/perf-best-practices.html"
+    pillar: Performance
+    maturity: proven
+
+  # ===========================================================================
+  # DEVOPS / ALM
+  # ===========================================================================
+
+  - title: "Adopt Package-Based Development with Unlocked Packages"
+    heading: "Unlocked Packages for Modular ALM"
+    text: >
+      Organize metadata into unlocked packages that map to functional modules rather
+      than deploying one large, undifferentiated set of source. Package-based
+      development makes dependencies explicit, enables independent versioning and
+      release of modules, and simplifies removing or upgrading features. It is the
+      recommended modern application lifecycle model for org development, replacing
+      change-set-driven deployment. Combine unlocked packages with a source-of-truth
+      repository and automated builds for repeatable, auditable releases.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_unlocked_pkg_intro.htm"
+    pillar: Reliability
+    maturity: proven
+
+  - title: "Treat Version Control as the Source of Truth"
+    heading: "Source-Driven Development"
+    text: >
+      Manage all Salesforce metadata in a version control system (such as Git) as the
+      single source of truth, using Salesforce DX source format. Developers work in
+      scratch or developer sandboxes, commit changes, and deploy from the repository
+      through a pipeline rather than making unversioned changes directly in higher
+      environments. Source control provides history, code review, branching, and the
+      ability to reproduce any environment, and is the foundation for CI/CD. Avoid
+      manual change-set promotion, which is untracked and error-prone.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_intro.htm"
+    pillar: Reliability
+    maturity: tried-and-true
+
+  - title: "Automate Deployments with a CI/CD Pipeline"
+    heading: "CI/CD for Salesforce"
+    text: >
+      Build a continuous integration and delivery pipeline that, on each change,
+      creates an environment, deploys the metadata, runs Apex tests and static
+      analysis, and promotes validated artifacts through environments to production.
+      Automating validation catches regressions early, enforces test coverage and
+      quality gates, and makes releases repeatable and low-risk. Use the Salesforce
+      CLI in the pipeline for source deployment and test execution, and require a
+      green build before promotion. Manual, ad-hoc deployments do not scale and
+      invite production incidents.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: architect_site
+    source_trust: 95
+    provenance_url: "https://architect.salesforce.com/docs/architect/well-architected/guide/adaptable"
+    pillar: Reliability
+    maturity: proven
+
+  - title: "Define a Sandbox and Environment Strategy"
+    heading: "Sandbox and Environment Strategy"
+    text: >
+      Plan a tiered environment strategy that separates development, integration
+      testing, UAT, staging, and production, using the appropriate sandbox types
+      (Developer, Developer Pro, Partial Copy, Full) for each purpose. Use Full
+      sandboxes for performance and scale testing with production-like data, and
+      Partial Copy for UAT with a representative sample. Keep environments refreshed
+      and consistent, and never develop or hotfix directly in production. A clear
+      environment strategy underpins reliable, parallelizable delivery.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://help.salesforce.com/s/articleView?id=platform.data_sandbox_environments.htm&type=5"
+    pillar: Reliability
+    maturity: proven
+
+  - title: "Use Scratch Orgs for Disposable Development"
+    heading: "Scratch Orgs for Development"
+    text: >
+      Use scratch orgs — source-driven, disposable environments defined by a
+      configuration file — for feature development and automated testing. Because a
+      scratch org is built from source and sample data on demand, it guarantees a
+      clean, reproducible starting point and makes the org's shape part of version
+      control. Spin one up per feature or CI run and discard it afterward. Scratch
+      orgs are central to the package development model and keep developer
+      environments from drifting.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_scratch_orgs.htm"
+    pillar: Reliability
+    maturity: proven
+
+  - title: "Externalize Configuration with Custom Metadata Types"
+    heading: "Custom Metadata for Configuration"
+    text: >
+      Store configuration, mappings, thresholds, and feature settings in Custom
+      Metadata Types rather than hardcoding them in Apex or using Custom Settings for
+      deployable config. Custom metadata records are deployable and packageable, are
+      available in Apex without consuming SOQL query limits, and let admins change
+      behavior without code changes. This makes automation environment-aware and
+      testable, supports feature toggles, and keeps secrets and endpoints out of
+      source. Prefer Custom Metadata for config that should move between orgs with
+      the code.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.custommetadatatypes.meta/custommetadatatypes/custom_metadata_types_about.htm"
+    pillar: Reliability
+    maturity: proven
+
+  - title: "Manage Deployments and Destructive Changes Safely"
+    heading: "Metadata Deployment Safety"
+    text: >
+      Deploy metadata through validated, repeatable processes: run validation-only
+      deployments with the required test level against the target before promoting,
+      script destructive changes explicitly (destructiveChanges) and review them, and
+      deploy in dependency order. Never delete metadata blindly or rely on manual
+      clicks in production. Keep deployment manifests in version control and prefer
+      quick-deploy of a previously validated package to minimize the production
+      change window. This reduces failed deployments and accidental data or metadata
+      loss.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.api_meta.meta/api_meta/meta_deploy.htm"
+    pillar: Reliability
+    maturity: proven
+
+  - title: "Roll Out Changes Behind Feature Flags"
+    heading: "Feature Flags for Safe Rollout"
+    text: >
+      Gate new or risky functionality behind feature flags backed by Custom Metadata
+      or Custom Settings so features can be enabled per environment, profile, or user
+      without redeploying code. Feature flags decouple deployment from release, enable
+      progressive rollout and fast rollback, and let you deploy dormant code safely.
+      Combine them with monitoring so a problematic feature can be switched off
+      immediately. Remove stale flags once a feature is fully adopted to avoid
+      accumulating dead configuration.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: architect_site
+    source_trust: 95
+    provenance_url: "https://architect.salesforce.com/docs/architect/well-architected/guide/adaptable"
+    pillar: Reliability
+    maturity: proven
+
+  # ===========================================================================
+  # TESTING
+  # ===========================================================================
+
+  - title: "Create Test Data In-Test, Never Rely on Org Data"
+    heading: "Test Data Isolation"
+    text: >
+      Apex tests must create their own test data and must not depend on records that
+      happen to exist in the org; avoid @isTest(SeeAllData=true) except for the rare
+      cases that genuinely require it (such as certain metadata or report tests).
+      Tests that see org data are non-deterministic and break across environments.
+      Use a centralized test data factory or @TestSetup method to build consistent
+      fixtures. Isolated test data makes tests reliable, portable across sandboxes
+      and scratch orgs, and safe to run in CI.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_testing_data.htm"
+    pillar: Reliability
+    maturity: tried-and-true
+
+  - title: "Wrap Code Under Test with Test.startTest and stopTest"
+    heading: "Test.startTest and stopTest Usage"
+    text: >
+      Enclose the code under test between Test.startTest() and Test.stopTest() so it
+      runs with a fresh set of governor limits separate from the test's data setup,
+      and so asynchronous work (future, queueable, batch) enqueued inside the block is
+      executed synchronously by the time stopTest() returns. This lets you assert on
+      the results of asynchronous processing and prevents setup DML from consuming the
+      limits you intend to measure. Place assertions after stopTest() to verify the
+      final state.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_methods_system_test.htm"
+    pillar: Reliability
+    maturity: tried-and-true
+
+  - title: "Test Bulk, Positive, and Negative Scenarios"
+    heading: "Comprehensive Test Scenarios"
+    text: >
+      Write tests that cover positive cases, negative and error cases, boundary
+      conditions, and — critically — bulk operations with at least 200 records so the
+      code is proven to be bulk-safe under trigger batch sizes. Coverage percentage
+      alone is not quality; a test that exercises one record can pass while the code
+      fails on a full batch. Include tests for restricted-permission users to verify
+      security enforcement. Meaningful scenario coverage catches the governor-limit
+      and FLS bugs that matter in production.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_testing_best_practices.htm"
+    pillar: Reliability
+    maturity: tried-and-true
+
+  - title: "Mock HTTP Callouts in Tests"
+    heading: "Mock Callouts in Tests"
+    text: >
+      Apex tests cannot make real callouts, so implement HttpCalloutMock (or
+      WebServiceMock) and register it with Test.setMock to return controlled
+      responses, including error and timeout paths. Mocking makes integration code
+      testable and deterministic and lets you assert that the code handles non-200
+      responses and malformed payloads correctly. Test both the happy path and
+      failure handling so retry, logging, and error propagation are verified without
+      depending on an external system's availability.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_callouts_test.htm"
+    pillar: Reliability
+    maturity: tried-and-true
+
+  - title: "Assert on Outcomes, Not Just Coverage"
+    heading: "Assert on Results in Tests"
+    text: >
+      A test must verify behavior with explicit System.assert / Assert methods on the
+      expected outcome, not merely execute code to reach a coverage number. Assert on
+      returned values, record field states after DML, error messages on negative
+      paths, and the count of processed records. Coverage without assertions gives
+      false confidence: the code runs but nothing checks it is correct. Prefer the
+      Assert class for clear, descriptive failure messages that make regressions easy
+      to diagnose.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_testing_best_practices.htm"
+    pillar: Reliability
+    maturity: tried-and-true
+
+  # ===========================================================================
+  # SECURITY (expanded)
+  # ===========================================================================
+
+  - title: "Prevent SOQL Injection in Dynamic Queries"
+    heading: "SOQL Injection Prevention"
+    text: >
+      When building dynamic SOQL from user input, never concatenate the input
+      directly into the query string. Use static bind variables, or sanitize input
+      with String.escapeSingleQuotes for string values, and validate or allowlist
+      field and object names that cannot be bound. Prefer parameterized queries and
+      typed inputs over string building. Dynamic SOQL assembled from untrusted input
+      is the primary SOQL injection vector and can expose or corrupt data. Apply the
+      same care to dynamic SOSL and dynamically constructed Database.query calls.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/pages_security_tips_soql_soql_injection.htm"
+    pillar: Security
+    maturity: tried-and-true
+
+  - title: "Store Secrets in Protected Custom Metadata or Named Credentials"
+    heading: "Secure Secret Storage"
+    text: >
+      Never hardcode API keys, passwords, or tokens in Apex, Flows, or unprotected
+      configuration. Store endpoint credentials in Named/External Credentials and
+      other secrets in protected Custom Metadata Types or protected Custom Settings so
+      they are not readable by subscribers of a managed package or by users without
+      access. Rotate secrets on a schedule and keep them out of version control.
+      Hardcoded secrets leak through code inspection and source history and are a
+      common cause of security incidents.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_callouts_named_credentials.htm"
+    pillar: Security
+    maturity: proven
+
+  - title: "Lock Down Guest and Experience Cloud User Access"
+    heading: "Guest User Security"
+    text: >
+      Treat the Experience Cloud guest user as untrusted public access: keep its
+      profile permissions minimal, set org-wide defaults so the guest user has no
+      broad access, use guest user sharing rules to grant only the specific records
+      required, and secure every @AuraEnabled method the site can reach. Review Apex
+      classes exposed to sites for CRUD/FLS enforcement and input validation. Guest
+      user misconfiguration is a well-known source of public data exposure, so audit
+      it explicitly before launching any public site.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://help.salesforce.com/s/articleView?id=sf.networks_guest_policies_secure.htm&type=5"
+    pillar: Security
+    maturity: proven
+
+  - title: "Encrypt Sensitive Data with Shield Platform Encryption"
+    heading: "Shield Platform Encryption"
+    text: >
+      For regulated or highly sensitive data, use Shield Platform Encryption to
+      encrypt data at rest at the field, file, and attachment level while preserving
+      key platform functionality. Understand the functional trade-offs: encrypted
+      fields have limits on filtering, sorting, and use in certain SOQL operations and
+      indexes, so encrypt selectively based on a data classification. Combine
+      encryption with strong access controls and, where needed, bring-your-own-key
+      management. Classify data first, then apply encryption where compliance or risk
+      justifies the functional constraints.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: architect_site
+    source_trust: 95
+    provenance_url: "https://architect.salesforce.com/docs/architect/well-architected/guide/secure"
+    pillar: Security
+    maturity: proven
+
+  - title: "Grant Access with Permission Sets, Not Broad Profiles"
+    heading: "Permission Sets Over Profiles"
+    text: >
+      Model access with permission sets and permission set groups assigned to users,
+      keeping profiles minimal, rather than cloning ever-more-specialized profiles.
+      Permission sets are additive, composable, and easier to audit; permission set
+      groups bundle them by role with the ability to mute specific permissions.
+      Salesforce is moving permission management toward permission sets, so building
+      the model this way is future-proof and supports least privilege by granting only
+      the specific permissions each functional role needs.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://help.salesforce.com/s/articleView?id=sf.perm_sets_overview.htm&type=5"
+    pillar: Security
+    maturity: proven
+
+  # ===========================================================================
+  # SCALABILITY / RELIABILITY (expanded)
+  # ===========================================================================
+
+  - title: "Chain Batch Apex for Very Large or Sequential Jobs"
+    heading: "Batch Apex Chaining"
+    text: >
+      Use Batch Apex for jobs over large data volumes, and chain jobs (start the next
+      batch from the finish method, or enqueue a Queueable) when work must proceed in
+      stages or exceeds what one job should do. Each execute() invocation gets a fresh
+      set of governor limits and processes a configurable scope (default 200). Tune
+      the batch size down for heavy per-record work to stay within CPU and heap, and
+      use Database.Stateful only when state must persist across batches. Monitor jobs
+      via AsyncApexJob and handle failures in the finish method.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_batch_interface.htm"
+    pillar: Scalability
+    maturity: tried-and-true
+
+  - title: "Design High-Volume Platform Events for Throughput"
+    heading: "High-Volume Platform Event Design"
+    text: >
+      When publishing platform events at high volume, account for the daily publish
+      and delivery allocations, the event bus's 72-hour retention, and subscriber
+      throughput. Keep event payloads small, make subscribers idempotent and fast, and
+      use the Pub/Sub API with flow control for external consumers so a slow consumer
+      does not fall behind. Batch related changes into fewer events where possible,
+      and monitor delivery with EventBus and usage metrics. Design for at-least-once
+      delivery and possible redelivery rather than assuming exactly-once.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.platform_events.meta/platform_events/platform_events_considerations.htm"
+    pillar: Scalability
+    maturity: proven
+
+  - title: "Route Trigger Logic Through a Handler Framework"
+    heading: "Trigger Handler Framework"
+    text: >
+      Implement a lightweight trigger handler framework so each object's single
+      trigger delegates to a handler class with clearly separated context methods
+      (beforeInsert, afterUpdate, and so on), centralized recursion control, and the
+      ability to bypass automation programmatically (for data loads or tests). A
+      handler framework makes trigger logic testable, ordered, and consistent across
+      the org, and prevents business logic from living in the trigger body. It is the
+      standard structure that operationalizes the one-trigger-per-object rule at
+      scale.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: community_blog
+    source_trust: 85
+    provenance_url: "https://developer.salesforce.com/blogs/2015/01/apex-best-practices-15-apex-commandments"
+    pillar: Scalability
+    maturity: proven
+
+  - title: "Degrade Gracefully When Integrations Fail"
+    heading: "Graceful Integration Degradation"
+    text: >
+      Design integrations so that a failure or slowness in an external system does not
+      break the Salesforce user experience or lose data. Use asynchronous, queued
+      callouts with bounded retries and backoff, capture failures for later reprocessing
+      (a dead-letter or error object), set explicit callout timeouts, and consider a
+      circuit-breaker that stops hammering an unavailable endpoint. Surface a clear
+      status to users rather than an uncaught exception. Resilient integrations assume
+      remote systems will occasionally be down and recover automatically when they
+      return.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: architect_site
+    source_trust: 95
+    provenance_url: "https://architect.salesforce.com/docs/architect/well-architected/guide/resilient"
+    pillar: Reliability
+    maturity: proven
+
+  - title: "Monitor Asynchronous Jobs and Set Up Alerting"
+    heading: "Async Job Monitoring"
+    text: >
+      Make asynchronous processing observable: query AsyncApexJob and related objects
+      to track batch, queueable, future, and scheduled job status, capture failures to
+      a custom log or error object, and alert operators when jobs fail or back up.
+      Silent async failures are a common production blind spot because they do not
+      surface to end users. Establish dashboards and proactive alerts, and define
+      runbooks for reprocessing failed work so issues are detected and resolved before
+      they compound.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: architect_site
+    source_trust: 95
+    provenance_url: "https://architect.salesforce.com/docs/architect/well-architected/guide/resilient"
+    pillar: Reliability
+    maturity: proven
+
+  - title: "Use SOQL For Loops to Limit Heap Usage"
+    heading: "SOQL For Loops for Heap"
+    text: >
+      When processing a large query result set in Apex, iterate it with a SOQL for
+      loop (for (Account a : [SELECT ... FROM Account])) so records are retrieved in
+      batches of 200 and the whole result set is never held in the heap at once. This
+      keeps memory within the 6 MB synchronous / 12 MB asynchronous heap limits on
+      large data. Assigning a large query directly to a List can blow the heap; the
+      SOQL for loop is the idiomatic way to stream and process many records safely
+      within a single transaction.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/langCon_apex_SOQL_for_loops.htm"
+    pillar: Performance
+    maturity: tried-and-true
+
+  - title: "Aggregate in the Database with SOQL Aggregate Functions"
+    heading: "SOQL Aggregate Functions"
+    text: >
+      Compute sums, counts, averages, and groupings with SOQL aggregate functions and
+      GROUP BY rather than querying raw rows and aggregating them in Apex loops.
+      Database-side aggregation returns far fewer rows, avoids heap and CPU pressure,
+      and is dramatically faster on large data. Use HAVING to filter aggregated
+      results and GROUP BY ROLLUP for subtotals. Pulling millions of rows into Apex to
+      sum them is a classic anti-pattern that hits query-row and heap limits; let the
+      platform do the math.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.soql_sosl.meta/soql_sosl/sforce_api_calls_soql_select_agg_functions.htm"
+    pillar: Performance
+    maturity: tried-and-true
+
+  - title: "Layer Apex with a Service Layer"
+    heading: "Apex Service Layer"
+    text: >
+      Structure Apex into layers: a service layer that encapsulates business logic and
+      transaction boundaries, a domain layer for object behavior, and a selector layer
+      for queries. Callers (triggers, controllers, invocable methods, batch jobs)
+      invoke coarse-grained service methods rather than embedding business logic
+      directly. Separation of concerns makes logic reusable across entry points,
+      keeps units testable in isolation, and prevents duplicated rules scattered
+      across triggers and controllers. Keep the service layer bulk-oriented and free of
+      view or trigger-context specifics.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: architect_site
+    source_trust: 95
+    provenance_url: "https://architect.salesforce.com/docs/architect/well-architected/guide/adaptable"
+    pillar: Reliability
+    maturity: proven
+
+  - title: "Centralize Queries in a Selector Layer"
+    heading: "Apex Selector Layer"
+    text: >
+      Consolidate SOQL for each object into a dedicated selector class rather than
+      scattering queries throughout triggers, controllers, and services. A selector
+      layer gives a single place to enforce field-level security, keep queries
+      selective and consistent, control the fields returned, and reuse query logic.
+      This reduces duplicate and divergent queries, makes it easy to audit what data
+      each object exposes, and simplifies changing a query in one place when the data
+      model evolves. Return typed Lists and keep selectors free of business logic.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: architect_site
+    source_trust: 95
+    provenance_url: "https://architect.salesforce.com/docs/architect/well-architected/guide/adaptable"
+    pillar: Reliability
+    maturity: proven
+
+  - title: "Handle Mixed DML Restrictions"
+    heading: "Mixed DML Handling"
+    text: >
+      Be aware of the Mixed DML restriction: in a single transaction you cannot
+      perform DML on setup objects (such as User, Group, or permission set
+      assignments) together with DML on non-setup objects in the same context. When
+      both are required, separate them across transaction boundaries — for example,
+      perform the setup-object DML in an asynchronous method (@future or Queueable) so
+      it runs in its own transaction. In tests, use System.runAs to isolate the
+      operations. Designing for this restriction prevents MIXED_DML_OPERATION runtime
+      errors.
+    api_version: "67.0"
+    knowledge_version: "v67"
+    source_type: official_docs
+    source_trust: 100
+    provenance_url: "https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_dml_non_mix_sobjects.htm"
+    pillar: Reliability
+    maturity: proven

@@ -166,16 +166,34 @@ def _iter_source_files(repo_root: Path):
             yield path, "metadata"
 
 
+@lru_cache(maxsize=8192)
+def _parse_cached(path_str: str, kind: str, mtime_ns: int, size: int) -> FileNode:
+    """Parse a file, memoized by (path, mtime, size).
+
+    ``analyze_local_blast_radius`` rebuilds the whole graph on every call; without
+    memoization a large DX repo is fully re-parsed each time. Keying on the file's
+    mtime and size means an edited file is transparently re-parsed while unchanged
+    files are served from cache. Callers treat the returned node as read-only.
+    """
+    path = Path(path_str)
+    return parse_apex(path) if kind == "apex" else parse_metadata(path)
+
+
+def _parse_file(path: Path, kind: str) -> FileNode:
+    """Parse ``path`` through the mtime-keyed cache, falling back on any error."""
+    try:
+        stat = path.stat()
+        return _parse_cached(str(path), kind, stat.st_mtime_ns, stat.st_size)
+    except Exception:
+        return FileNode(path=str(path), kind=kind)
+
+
 def build_dependency_graph(repo_root: str | Path) -> dict[str, FileNode]:
     """Parse every Apex/metadata file under ``repo_root`` into a node map."""
     repo_root = Path(repo_root)
     graph: dict[str, FileNode] = {}
     for path, kind in _iter_source_files(repo_root):
-        try:
-            node = parse_apex(path) if kind == "apex" else parse_metadata(path)
-        except Exception:
-            node = FileNode(path=str(path), kind=kind)
-        graph[str(path)] = node
+        graph[str(path)] = _parse_file(path, kind)
     return graph
 
 

@@ -1,0 +1,183 @@
+{
+  "name": "sf-local-architect",
+  "displayName": "Local SF Architect",
+  "description": "One-click install and setup of the Local Salesforce Architect MCP engine for GitHub Copilot, Cursor, and Claude Code. Fully local, offline Salesforce architecture tooling.",
+  "version": "0.1.2",
+  "publisher": "sf-local-architect",
+  "license": "Apache-2.0",
+  "engines": {
+    "vscode": "^1.101.0"
+  },
+  "categories": [
+    "AI",
+    "Other"
+  ],
+  "keywords": [
+    "salesforce",
+    "apex",
+    "mcp",
+    "copilot",
+    "cursor",
+    "claude code",
+    "architecture",
+    "governor limits"
+  ],
+  "icon": "media/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/personalaimaster-coder/Local_SF_Architect.git"
+  },
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished",
+    "workspaceContains:**/sfdx-project.json"
+  ],
+  "contributes": {
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "sfLocalArchitect.mcpProvider",
+        "label": "Local SF Architect"
+      }
+    ],
+    "commands": [
+      {
+        "command": "sfArchitect.setup",
+        "title": "Local SF Architect: Run Setup (Install + Configure)",
+        "category": "Local SF Architect"
+      },
+      {
+        "command": "sfArchitect.installEngine",
+        "title": "Local SF Architect: Install / Update Engine",
+        "category": "Local SF Architect"
+      },
+      {
+        "command": "sfArchitect.firstRunSetup",
+        "title": "Local SF Architect: Download Model + Seed Knowledge Base",
+        "category": "Local SF Architect"
+      },
+      {
+        "command": "sfArchitect.configureCopilot",
+        "title": "Local SF Architect: Configure GitHub Copilot / VS Code",
+        "category": "Local SF Architect"
+      },
+      {
+        "command": "sfArchitect.configureCursor",
+        "title": "Local SF Architect: Configure Cursor",
+        "category": "Local SF Architect"
+      },
+      {
+        "command": "sfArchitect.configureClaudeCode",
+        "title": "Local SF Architect: Configure Claude Code",
+        "category": "Local SF Architect"
+      },
+      {
+        "command": "sfArchitect.configureAll",
+        "title": "Local SF Architect: Configure All Detected Agents",
+        "category": "Local SF Architect"
+      },
+      {
+        "command": "sfArchitect.rebuildStores",
+        "title": "Local SF Architect: Rebuild Local Stores",
+        "category": "Local SF Architect"
+      },
+      {
+        "command": "sfArchitect.showLogs",
+        "title": "Local SF Architect: Show Logs",
+        "category": "Local SF Architect"
+      },
+      {
+        "command": "sfArchitect.showStatus",
+        "title": "Local SF Architect: Show Status",
+        "category": "Local SF Architect"
+      }
+    ],
+    "configuration": {
+      "title": "Local SF Architect",
+      "properties": {
+        "sfArchitect.enginePackage": {
+          "type": "string",
+          "default": "sf-local-architect",
+          "markdownDescription": "PyPI package name (or `name==version` / local path) used to install the engine via `uv tool install`."
+        },
+        "sfArchitect.autoSetupOnActivate": {
+          "type": "boolean",
+          "default": true,
+          "description": "On first activation, automatically run the install + configure flow (with a confirmation prompt). Disable to run setup manually via the command palette."
+        },
+        "sfArchitect.autoConfigureAgents": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically wire the engine into detected agents (Copilot/VS Code, Cursor, Claude Code) without an extra prompt per agent."
+        },
+        "sfArchitect.autoDownloadModel": {
+          "type": "boolean",
+          "default": true,
+          "description": "During first-run setup, automatically download the embedding and reranker models (~210 MB total). If disabled, you must run the model download manually before querying patterns."
+        },
+        "sfArchitect.uvPath": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute path to the `uv` executable. Leave empty to auto-detect on PATH and in common install locations."
+        }
+      }
+    },
+    "walkthroughs": [
+      {
+        "id": "sfArchitect.gettingStarted",
+        "title": "Get started with Local SF Architect",
+        "description": "Install the local engine and wire it into Copilot, Cursor, or Claude Code.",
+        "steps": [
+          {
+            "id": "install",
+            "title": "Install the engine",
+            "description": "Install the fully-local Salesforce architect engine from PyPI using uv.\n[Install / Update Engine](command:sfArchitect.installEngine)",
+            "media": {
+              "markdown": "media/walkthrough-install.md"
+            }
+          },
+          {
+            "id": "firstRun",
+            "title": "Download model + seed",
+            "description": "Download the embedding + reranker models (~210 MB, once) and build the local knowledge base.\n[Download Model + Seed](command:sfArchitect.firstRunSetup)",
+            "media": {
+              "markdown": "media/walkthrough-seed.md"
+            }
+          },
+          {
+            "id": "configure",
+            "title": "Configure your agents",
+            "description": "Wire the engine into every detected agent.\n[Configure All Detected Agents](command:sfArchitect.configureAll)",
+            "media": {
+              "markdown": "media/walkthrough-configure.md"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "package": "node esbuild.js --production",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
+    "vsce:package": "vsce package --no-dependencies",
+    "publish:vsce": "vsce publish --no-dependencies",
+    "publish:ovsx": "ovsx publish --no-dependencies"
+  },
+  "dependencies": {
+    "jsonc-parser": "^3.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.101.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "@vscode/vsce": "^3.2.0",
+    "esbuild": "^0.24.0",
+    "eslint": "^9.0.0",
+    "ovsx": "^0.10.0",
+    "typescript": "^5.6.0"
+  }
+}

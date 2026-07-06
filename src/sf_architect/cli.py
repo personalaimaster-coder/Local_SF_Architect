@@ -48,6 +48,20 @@ def doctor(download: bool) -> None:
         embed("warmup")
         click.echo("  embedding model: cached")
 
+        # Pre-cache the cross-encoder too when reranking is enabled, so the engine
+        # stays fully offline after setup (reranking otherwise downloads on first use).
+        from sf_architect.bootstrap import read_config
+
+        if read_config().get("reranker_enabled", False):
+            click.echo("Downloading / warming reranker model...")
+            try:
+                from sf_architect.rerank import _default_scorer
+
+                _default_scorer("warmup", ["warmup"])
+                click.echo("  reranker model: cached")
+            except Exception as exc:  # non-fatal: reranking degrades gracefully
+                click.echo(f"  reranker model: skipped ({exc})")
+
     if not py_ok:
         raise SystemExit(1)
 

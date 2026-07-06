@@ -26,23 +26,41 @@ DEFAULT_CONFIG = """\
 # sf-local-architect configuration
 deliverable_preference: mermaid          # mermaid | drawio
 embedding_model: BAAI/bge-small-en-v1.5
-reranker_enabled: false
-reranker_model: BAAI/bge-reranker-v2-m3
+reranker_enabled: true                   # cross-encoder rerank for higher precision
+reranker_model: Xenova/ms-marco-MiniLM-L-6-v2   # small (~80 MB), fastembed-supported
 source_trust:                            # per-domain overrides (Gap 3)
+  developer.salesforce.com: 100
   help.salesforce.com: 100
   architect.salesforce.com: 95
   default: 60
-scrape_allowlist: []                     # P0 for Gap 5; empty = scraping disabled
+# Domains that `sync_latest_patterns` is permitted to scrape. Pre-seeded with the
+# official Salesforce documentation domains only; every fetch still passes through
+# SSRF validation, HTML sanitization, and the prompt-injection guard, and content
+# is stored as untrusted reference data. Remove entries to disable, or add your own
+# trusted docs domain. Set to [] to disable scraping entirely.
+scrape_allowlist:
+  - developer.salesforce.com
+  - architect.salesforce.com
+  - help.salesforce.com
 """
 
 
 def repo_data_dir() -> Path:
-    """Locate the repo-committed ``data/`` directory (seed sources).
+    """Locate the directory holding the seed sources (``limits_seed.yaml`` etc.).
 
-    Resolves relative to the installed package first, then the current working
-    directory, so ``sf-architect seed`` works from a dev checkout.
+    Resolution order:
+
+    1. ``sf_architect/data/`` packaged alongside this module — present when the
+       package is installed from a wheel (PyPI / ``uv tool install`` / ``uvx``),
+       where the seed files are force-included at build time.
+    2. The repo-root ``data/`` directory — present in a dev checkout.
+    3. ``./data`` relative to the current working directory — last-resort fallback.
+
+    The first candidate that actually contains ``limits_seed.yaml`` wins, so the
+    same code path works whether running from source or from an installed wheel.
     """
     candidates = [
+        Path(__file__).resolve().parent / "data",
         Path(__file__).resolve().parents[2] / "data",
         Path.cwd() / "data",
     ]

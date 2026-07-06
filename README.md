@@ -32,6 +32,26 @@ It is a **Model Context Protocol (MCP) server** — think of it as a plugin that
 
 ---
 
+## Easiest setup — the VS Code / Cursor extension
+
+If you use **VS Code (with GitHub Copilot)** or **Cursor**, the simplest path is the
+companion extension. It installs the engine for you and wires it into your AI agent
+in one click — no manual `mcp.json` editing.
+
+1. Install **Local SF Architect** from the VS Code Marketplace (VS Code/Copilot) or
+   Open VSX (Cursor).
+2. On first activation it offers to: install the engine via `uv`, download the model,
+   seed the knowledge base, and configure every detected agent (Copilot, Cursor, and
+   the Claude Code CLI if present).
+3. Open your AI chat in **Agent mode** and start asking questions.
+
+The extension lives in [`extension/`](extension/); see [`extension/README.md`](extension/README.md)
+for details. It still relies on `uv` being installed and needs internet once (PyPI install
+plus the ~130 MB model). Prefer to set things up by hand, or using Claude Code only? The
+manual MCP steps below still work exactly as before.
+
+---
+
 ## Architecture overview
 
 ```
@@ -220,7 +240,7 @@ Once the MCP server is running in Cursor, the AI has access to these tools. You 
 | `generate_architecture_diagram` | Writes a Mermaid `.md` or draw.io `.drawio` file | *"Draw me the dependency graph for the Order subsystem"* |
 | `set_deliverable_preference` | Persist your preferred diagram format (Mermaid or draw.io) | *"Always generate draw.io diagrams from now on"* |
 | `score_architecture` | Six-pillar scorecard + risk score with explanations | *"Score the architecture health of this project"* |
-| `sync_latest_patterns` | Opt-in: scrape an allowlisted URL and store new patterns | Disabled until you add a domain to `scrape_allowlist` in `config.yaml` |
+| `sync_latest_patterns` | Scrape an allowlisted docs URL and store new patterns | *"Learn the patterns from this Salesforce docs page: <url>"* |
 
 Every tool returns a common envelope:
 
@@ -243,12 +263,23 @@ All runtime data lives under `~/.sf-architect/` and is **never committed to git*
 
 ```
 ~/.sf-architect/
-  config.yaml          your preferences + scrape allowlist (empty by default)
+  config.yaml          your preferences + scrape allowlist (official SF docs domains)
   data/lance/          vector store — patterns + embeddings
   limits.db            compiled governor limits (SQLite)
   logs/audit.db        one row per tool call (SQLite) — local only
   meta.json            schema version + embedding model record
 ```
+
+### Refreshing the knowledge base from official docs
+
+The bundled knowledge base ships with 78 curated patterns (Summer '26 / API v67.0).
+To learn new patterns from a Salesforce documentation page after a release, ask your
+AI agent to call `sync_latest_patterns` with an allowlisted URL, or drive it from the
+tool directly. The pipeline fetches the page, runs SSRF + sanitizer + injection-guard
+checks, chunks and embeds the content, and performs a knowledge-version–aware upsert
+(older guidance for the same source is superseded, not duplicated). Only the official
+Salesforce docs domains in `scrape_allowlist` are permitted. Run `sf-architect gc` to
+prune superseded vectors afterward.
 
 ### Schema migration
 
@@ -264,9 +295,9 @@ This drops and rebuilds all local stores from the seed files.
 
 ## Security & privacy model
 
-- **No outbound network calls** at runtime — enforced by a test that will fail if any tool makes an unexpected network request
-- **Scraping is disabled by default** — `scrape_allowlist` in `config.yaml` is empty; the `sync_latest_patterns` tool is a no-op until you explicitly add a domain
-- **Scraped content is sandboxed** — runs through a sanitizer (strips scripts, zero-width chars, hidden elements) and a prompt-injection guard before storage; labeled as "untrusted reference data" in all responses
+- **No outbound network calls** at runtime — enforced by a test that will fail if any tool makes an unexpected network request (scraping is the only sanctioned network path)
+- **Scraping is domain-gated** — `scrape_allowlist` in `config.yaml` is pre-seeded with the official Salesforce documentation domains only (`developer.salesforce.com`, `architect.salesforce.com`, `help.salesforce.com`). `sync_latest_patterns` refuses any other domain. Set the allowlist to `[]` to disable scraping entirely, or add your own trusted docs domain
+- **Scraped content is sandboxed** — every fetch passes through SSRF validation, a sanitizer (strips scripts, zero-width chars, hidden elements), and a prompt-injection guard before storage; labeled as "untrusted reference data" in all responses
 - **stdio transport only** — no TCP port, no auth surface; the IDE spawns the server as a child process
 - **Your code never leaves your machine**
 
@@ -338,8 +369,11 @@ The test suite covers:
 │   ├── limits_seed.yaml        # curated Salesforce governor limits (v62.0)
 │   └── patterns_seed.yaml      # seed architecture patterns + embeddings
 ├── tests/                      # full test suite
+├── .vscode/
+│   └── mcp.json                # VS Code MCP config (GitHub Copilot Agent mode)
 ├── docs/                       # detailed design docs
 │   ├── mcp-cursor-setup.md     # Cursor + Claude Code MCP config guide
+│   ├── vscode-setup.md         # VS Code + GitHub Copilot setup guide
 │   ├── Tech-Stack.md           # full tech stack with versions + rationale
 │   ├── Implementation-Plan.md  # phase-by-phase build playbook
 │   └── Local-SF-Architect-Analysis-and-Plan.md
@@ -354,6 +388,7 @@ The test suite covers:
 | Doc | What it covers |
 |---|---|
 | [`docs/mcp-cursor-setup.md`](docs/mcp-cursor-setup.md) | Full Cursor + Claude Code MCP config snippets |
+| [`docs/vscode-setup.md`](docs/vscode-setup.md) | VS Code + GitHub Copilot Agent mode setup (VS Code 1.99+) |
 | [`docs/Tech-Stack.md`](docs/Tech-Stack.md) | Every dependency, version, license, and the reason it was chosen |
 | [`docs/Implementation-Plan.md`](docs/Implementation-Plan.md) | Phase-by-phase build playbook (Phases 0–6.5 complete) |
 | [`docs/Local-SF-Architect-Analysis-and-Plan.md`](docs/Local-SF-Architect-Analysis-and-Plan.md) | Full analysis, gap list, and architecture decisions |

@@ -2,23 +2,20 @@
 # A living, labeled set of question -> expected pattern/source used by
 # tests/test_golden.py to assert retrieval quality has ground truth.
 #
-# Coverage: 18 primary cases — one per pattern heading in data/patterns_seed.yaml —
-# plus 4 alternate-phrasing cases that test retrieval robustness. Total: 22 cases.
+# Coverage: one case per pattern heading in data/patterns_seed.yaml (78 patterns)
+# plus 4 alternate-phrasing cases that test retrieval robustness.
 #
 # Rules:
 #   - `expected_heading` MUST match a `heading` field in data/patterns_seed.yaml.
 #   - Questions are phrased as a developer/architect would naturally ask them,
 #     NOT copied verbatim from the pattern text (tests genuine semantic search).
 #   - Add entries here whenever a new pattern is added to patterns_seed.yaml.
-#
-# Pillar breakdown: Security(5) + Reliability(5) + Scalability(5) + Performance(3)
-# + 4 alternate phrasings = 22 total cases.
 
 cases:
 
   # ── Scalability ─────────────────────────────────────────────────────────────
 
-  - question: "How do I keep Apex safe when processing many records at high volume?"
+  - question: "How do I bulkify Apex so a trigger processes a collection of records with one SOQL and one DML instead of per record?"
     expected_heading: "Bulkification"
     expected_pillar: Scalability
 
@@ -70,7 +67,7 @@ cases:
     expected_heading: "Queueable Apex for Async Work"
     expected_pillar: Reliability
 
-  - question: "How do I decouple two Salesforce systems so they don't depend on each other?"
+  - question: "How do I use platform events for a publish-subscribe integration between decoupled publishers and subscribers?"
     expected_heading: "Platform Events for Loose Coupling"
     expected_pillar: Reliability
 
@@ -78,7 +75,7 @@ cases:
     expected_heading: "Apex Error Handling and Partial Success"
     expected_pillar: Reliability
 
-  - question: "How do I validate that my Salesforce architecture can handle production data volumes?"
+  - question: "How do I use Scale Test in a Full sandbox to validate the architecture before go-live?"
     expected_heading: "Scale Testing and Availability Design"
     expected_pillar: Reliability
 
@@ -113,3 +110,259 @@ cases:
   - question: "I need to run a large batch job that processes millions of records nightly"
     expected_heading: "Asynchronous Apex for Heavy Work"
     expected_pillar: Performance
+
+  # ── Integration ──────────────────────────────────────────────────────────────
+
+  - question: "Which integration pattern should I choose for a request-reply versus fire-and-forget outbound integration?"
+    expected_heading: "Integration Pattern Selection"
+    expected_pillar: Reliability
+
+  - question: "How do I subscribe to platform events from an external system using the gRPC Pub/Sub API?"
+    expected_heading: "Pub/Sub API Event Streaming"
+    expected_pillar: Reliability
+
+  - question: "How do I stream record change events to an external data warehouse without polling?"
+    expected_heading: "Change Data Capture"
+    expected_pillar: Reliability
+
+  - question: "What is the best way to load millions of records into Salesforce asynchronously?"
+    expected_heading: "Bulk API 2.0 for Large Loads"
+    expected_pillar: Scalability
+
+  - question: "How do I combine several REST operations into one request to cut integration round trips?"
+    expected_heading: "Composite API to Reduce Round Trips"
+    expected_pillar: Performance
+
+  - question: "How do I make a long-running external callout from a Lightning request without tying up the server thread?"
+    expected_heading: "Continuations for Long-Running Callouts"
+    expected_pillar: Reliability
+
+  - question: "How do I avoid point-to-point integration sprawl across many systems using an ESB or middleware?"
+    expected_heading: "Middleware for Integration Decoupling"
+    expected_pillar: Reliability
+
+  - question: "How do I access external system data in real time without copying it into Salesforce?"
+    expected_heading: "Salesforce Connect External Objects"
+    expected_pillar: Scalability
+
+  - question: "How can admins call an external REST API from Flow without writing Apex using an OpenAPI schema?"
+    expected_heading: "External Services for Declarative Callouts"
+    expected_pillar: Reliability
+
+  - question: "How do I upsert records from an external system without creating duplicates using an external key field?"
+    expected_heading: "External IDs for Upsert Integrations"
+    expected_pillar: Reliability
+
+  # ── Data architecture / LDV ──────────────────────────────────────────────────
+
+  - question: "How do I design objects that will hold tens of millions of records for large data volumes?"
+    expected_heading: "Large Data Volume Design"
+    expected_pillar: Scalability
+
+  - question: "How do I make a SOQL filter field selective on a large object with a custom index?"
+    expected_heading: "Custom Indexes for Selectivity"
+    expected_pillar: Performance
+
+  - question: "How can I speed up reports on a huge object using a Salesforce-maintained read-only copy of fields?"
+    expected_heading: "Skinny Tables for Read Performance"
+    expected_pillar: Performance
+
+  - question: "Where should I store billions of historical or audit records that must stay queryable?"
+    expected_heading: "Big Objects for Archival"
+    expected_pillar: Scalability
+
+  - question: "How do I define a data retention and archiving lifecycle policy for aging records?"
+    expected_heading: "Data Archiving and Lifecycle"
+    expected_pillar: Scalability
+
+  - question: "How do I extract millions of records with the Bulk API without hitting query timeouts using chunking?"
+    expected_heading: "PK Chunking for Extraction"
+    expected_pillar: Scalability
+
+  - question: "How do I speed up a huge data load that triggers expensive sharing recalculation by deferring it?"
+    expected_heading: "Defer Sharing Calculation on Loads"
+    expected_pillar: Scalability
+
+  - question: "Should I use a master-detail or lookup relationship when modeling objects?"
+    expected_heading: "Relationship and Data Modeling"
+    expected_pillar: Scalability
+
+  # ── Automation (Flow vs Apex vs Trigger) ─────────────────────────────────────
+
+  - question: "When should I use a record-triggered Flow versus an Apex trigger for automation?"
+    expected_heading: "Flow vs Apex vs Trigger Decision"
+    expected_pillar: Scalability
+
+  - question: "What are best practices for building a bulk-safe record-triggered Flow?"
+    expected_heading: "Record-Triggered Flow Best Practices"
+    expected_pillar: Scalability
+
+  - question: "How do I update a field on the same record efficiently using before-save automation without an extra DML?"
+    expected_heading: "Before-Save Automation Context"
+    expected_pillar: Performance
+
+  - question: "How do I stop my Apex trigger from firing itself recursively?"
+    expected_heading: "Prevent Recursive Automation"
+    expected_pillar: Reliability
+
+  - question: "How do I call Apex from a Flow using an invocable method?"
+    expected_heading: "Invocable Apex from Flow"
+    expected_pillar: Reliability
+
+  - question: "Should I migrate Workflow Rules and Process Builder to consolidate to one automation type per object?"
+    expected_heading: "One Automation Type Per Object"
+    expected_pillar: Scalability
+
+  - question: "How do I run a slow callout from a record-triggered Flow without blocking the user save using an async path?"
+    expected_heading: "Asynchronous Paths for Automation"
+    expected_pillar: Reliability
+
+  # ── Lightning / front-end ────────────────────────────────────────────────────
+
+  - question: "Should I build new components in Aura or Lightning Web Components?"
+    expected_heading: "Prefer LWC Over Aura"
+    expected_pillar: Performance
+
+  - question: "How do I read and edit a single record in LWC without writing Apex using Lightning Data Service?"
+    expected_heading: "Lightning Data Service for Record CRUD"
+    expected_pillar: Performance
+
+  - question: "How do I cache read-only Apex results on the client with the wire service?"
+    expected_heading: "Cacheable Apex for LWC"
+    expected_pillar: Performance
+
+  - question: "How do I display thousands of rows in a datatable without loading them all at once using pagination?"
+    expected_heading: "LWC Pagination and Lazy Loading"
+    expected_pillar: Performance
+
+  - question: "How do I enforce CRUD and FLS in an AuraEnabled Apex controller called from LWC?"
+    expected_heading: "AuraEnabled Apex Security"
+    expected_pillar: Security
+
+  - question: "How do I communicate between two Lightning components that are not in the same DOM hierarchy?"
+    expected_heading: "Component Communication Patterns"
+    expected_pillar: Reliability
+
+  - question: "How do I keep a Lightning record page with many components rendering responsively?"
+    expected_heading: "LWC Rendering Performance"
+    expected_pillar: Performance
+
+  # ── DevOps / ALM ─────────────────────────────────────────────────────────────
+
+  - question: "How do I modularize my org metadata into unlocked packages for package-based development?"
+    expected_heading: "Unlocked Packages for Modular ALM"
+    expected_pillar: Reliability
+
+  - question: "Why should Git version control be the single source of truth for Salesforce metadata?"
+    expected_heading: "Source-Driven Development"
+    expected_pillar: Reliability
+
+  - question: "How do I set up an automated CI/CD deployment pipeline that runs Apex tests?"
+    expected_heading: "CI/CD for Salesforce"
+    expected_pillar: Reliability
+
+  - question: "Which sandbox types should I use for development, UAT, and performance testing?"
+    expected_heading: "Sandbox and Environment Strategy"
+    expected_pillar: Reliability
+
+  - question: "How do I use disposable scratch orgs for feature development?"
+    expected_heading: "Scratch Orgs for Development"
+    expected_pillar: Reliability
+
+  - question: "How do I externalize configuration with custom metadata types instead of hardcoding values in Apex?"
+    expected_heading: "Custom Metadata for Configuration"
+    expected_pillar: Reliability
+
+  - question: "How do I safely deploy metadata and destructive changes to production?"
+    expected_heading: "Metadata Deployment Safety"
+    expected_pillar: Reliability
+
+  - question: "How do I roll out a risky feature gradually behind a feature flag I can switch off?"
+    expected_heading: "Feature Flags for Safe Rollout"
+    expected_pillar: Reliability
+
+  # ── Testing ──────────────────────────────────────────────────────────────────
+
+  - question: "Why should Apex tests create their own data instead of relying on SeeAllData org records?"
+    expected_heading: "Test Data Isolation"
+    expected_pillar: Reliability
+
+  - question: "How do I test asynchronous Apex and get a fresh set of governor limits inside a test?"
+    expected_heading: "Test.startTest and stopTest Usage"
+    expected_pillar: Reliability
+
+  - question: "How do I write a test proving my trigger is bulk-safe with 200 records and negative cases?"
+    expected_heading: "Comprehensive Test Scenarios"
+    expected_pillar: Reliability
+
+  - question: "How do I test Apex code that makes an HTTP callout using a mock?"
+    expected_heading: "Mock Callouts in Tests"
+    expected_pillar: Reliability
+
+  - question: "Why is code coverage without assertions not enough in Apex unit tests?"
+    expected_heading: "Assert on Results in Tests"
+    expected_pillar: Reliability
+
+  # ── Security (expanded) ──────────────────────────────────────────────────────
+
+  - question: "How do I prevent SOQL injection when building a dynamic query from user input?"
+    expected_heading: "SOQL Injection Prevention"
+    expected_pillar: Security
+
+  - question: "Where should I store API keys and secrets instead of hardcoding them in Apex?"
+    expected_heading: "Secure Secret Storage"
+    expected_pillar: Security
+
+  - question: "How do I secure the guest user for a public Experience Cloud site?"
+    expected_heading: "Guest User Security"
+    expected_pillar: Security
+
+  - question: "How do I encrypt sensitive fields at rest for compliance using Shield?"
+    expected_heading: "Shield Platform Encryption"
+    expected_pillar: Security
+
+  - question: "Should I grant access with permission sets or by cloning profiles?"
+    expected_heading: "Permission Sets Over Profiles"
+    expected_pillar: Security
+
+  # ── Scalability / reliability (expanded) ─────────────────────────────────────
+
+  - question: "How do I process very large data volumes across chained batch Apex jobs?"
+    expected_heading: "Batch Apex Chaining"
+    expected_pillar: Scalability
+
+  - question: "What should I consider for throughput and delivery when publishing platform events at high volume?"
+    expected_heading: "High-Volume Platform Event Design"
+    expected_pillar: Scalability
+
+  - question: "How do I structure a trigger handler framework so business logic stays out of the trigger body?"
+    expected_heading: "Trigger Handler Framework"
+    expected_pillar: Scalability
+
+  - question: "How do I make integrations resilient with retries and a circuit breaker when an external system is down?"
+    expected_heading: "Graceful Integration Degradation"
+    expected_pillar: Reliability
+
+  - question: "How do I monitor and alert on failed batch and queueable asynchronous jobs?"
+    expected_heading: "Async Job Monitoring"
+    expected_pillar: Reliability
+
+  - question: "How do I iterate a large query result in Apex without exceeding the heap limit?"
+    expected_heading: "SOQL For Loops for Heap"
+    expected_pillar: Performance
+
+  - question: "How do I sum or count records in the database with GROUP BY instead of looping in Apex?"
+    expected_heading: "SOQL Aggregate Functions"
+    expected_pillar: Performance
+
+  - question: "How do I organize Apex business logic into a reusable service layer?"
+    expected_heading: "Apex Service Layer"
+    expected_pillar: Reliability
+
+  - question: "How do I centralize all SOQL for an object in a single selector class?"
+    expected_heading: "Apex Selector Layer"
+    expected_pillar: Reliability
+
+  - question: "How do I avoid a MIXED_DML_OPERATION error when updating a User and a custom object in one transaction?"
+    expected_heading: "Mixed DML Handling"
+    expected_pillar: Reliability
