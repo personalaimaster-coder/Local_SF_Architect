@@ -14,6 +14,9 @@ export const CLI_SCRIPT = "sf-architect";
 // globalState keys.
 export const STATE_SETUP_COMPLETE = "sfArchitect.setupComplete";
 export const STATE_INSTALL_PROMPTED = "sfArchitect.installPrompted";
+// The extension version for which we last upgraded the engine + refreshed the skill
+// on an existing install. Used to run the catch-up sync once per release.
+export const STATE_RELEASE_SYNCED = "sfArchitect.releaseSynced";
 
 export const DOCS_UV_INSTALL = "https://docs.astral.sh/uv/getting-started/installation/";
 

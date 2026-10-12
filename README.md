@@ -52,6 +52,26 @@ manual MCP steps below still work exactly as before.
 
 ---
 
+## Agent Skill (make agents actually use the engine)
+
+The repo ships a project-native **Agent Skill** at
+[`skills/local-sf-architect/`](skills/local-sf-architect/) that teaches any
+skill-compatible agent (Cursor, Claude Code, Copilot, Agentforce Vibes) *when* to call
+the engine's MCP tools, so architecture questions reliably route through the local,
+offline engine instead of guesswork. Install it into your project in one step:
+
+```bash
+sf-architect install-skill .
+```
+
+This copies the skill into each agent's skills directory and writes an always-on
+architect rule, so relevant questions route through the engine even on hosts without
+native skill support. (The VS Code / Cursor extension runs this automatically during
+setup.) See [`docs/Agent-Skills.md`](docs/Agent-Skills.md) for all install paths and how
+to add compatible external Salesforce skill libraries.
+
+---
+
 ## Architecture overview
 
 ```
@@ -208,6 +228,10 @@ uv run sf-architect doctor --download
 
 # Load limits + seed patterns into local stores
 uv run sf-architect seed
+
+# Install the Agent Skill + always-on rule into a project
+# (routes Salesforce questions through the engine's MCP tools)
+uv run sf-architect install-skill path/to/your/sfdx-project
 
 # Lint a Salesforce DX project for architectural issues
 # Returns exit code 1 if violations found (useful in CI)
@@ -389,6 +413,7 @@ The test suite covers:
 |---|---|
 | [`docs/mcp-cursor-setup.md`](docs/mcp-cursor-setup.md) | Full Cursor + Claude Code MCP config snippets |
 | [`docs/vscode-setup.md`](docs/vscode-setup.md) | VS Code + GitHub Copilot Agent mode setup (VS Code 1.99+) |
+| [`docs/Agent-Skills.md`](docs/Agent-Skills.md) | The bundled `local-sf-architect` Agent Skill + how to add compatible external skill libraries |
 | [`docs/Tech-Stack.md`](docs/Tech-Stack.md) | Every dependency, version, license, and the reason it was chosen |
 | [`docs/Implementation-Plan.md`](docs/Implementation-Plan.md) | Phase-by-phase build playbook (Phases 0–6.5 complete) |
 | [`docs/Local-SF-Architect-Analysis-and-Plan.md`](docs/Local-SF-Architect-Analysis-and-Plan.md) | Full analysis, gap list, and architecture decisions |

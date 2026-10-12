@@ -70,6 +70,25 @@ def repo_data_dir() -> Path:
     return candidates[0]
 
 
+def repo_skill_dir() -> Path:
+    """Locate the directory holding the bundled Agent Skill(s).
+
+    Mirrors :func:`repo_data_dir`: prefers the ``sf_architect/skills/`` directory
+    force-included in the wheel, then the repo-root ``skills/`` in a dev checkout,
+    then ``./skills`` relative to the CWD. The first candidate that actually holds
+    ``local-sf-architect/SKILL.md`` wins.
+    """
+    candidates = [
+        Path(__file__).resolve().parent / "skills",
+        Path(__file__).resolve().parents[2] / "skills",
+        Path.cwd() / "skills",
+    ]
+    for candidate in candidates:
+        if (candidate / "local-sf-architect" / "SKILL.md").exists():
+            return candidate
+    return candidates[0]
+
+
 def default_meta() -> dict:
     """The metadata that guards embedding-model/dimension and schema version."""
     return {
