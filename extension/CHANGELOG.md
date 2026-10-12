@@ -1,5 +1,15 @@
 # Change Log
 
+## 0.2.0
+
+- Installs the bundled `local-sf-architect` Agent Skill into detected agents
+  (`.cursor/skills/`, `.claude/skills/`, `.vibes/skills/`) and writes an always-on
+  architect rule during setup, so Salesforce questions reliably route through the
+  engine's MCP tools. Pairs with engine 0.3.0 on PyPI.
+- Existing installs: on activation after an extension update, the engine is upgraded
+  (`uv tool install --upgrade`) once per release and the skill is refreshed into an
+  open Salesforce workspace — no manual steps required.
+
 ## 0.1.2
 
 - More reliable engine-installed detection: `uv tool list` output is parsed and

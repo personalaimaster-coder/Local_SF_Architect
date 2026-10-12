@@ -144,6 +144,71 @@ export async function runFirstRunSetup(
   );
 }
 
+/**
+ * Upgrade the engine quietly (`uv tool install --upgrade`) for the background
+ * catch-up sync on existing installs. Unlike {@link installEngineWithProgress} this
+ * never shows an error dialog — failures (e.g. offline) are logged and reported via
+ * the return value so the caller can retry on the next activation. Returns true on
+ * success.
+ */
+export async function upgradeEngineQuietly(uvPath: string): Promise<boolean> {
+  return vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title: "Local SF Architect: updating engine…",
+      cancellable: true,
+    },
+    async (progress, token) => {
+      const controller = new AbortController();
+      token.onCancellationRequested(() => controller.abort());
+      try {
+        await installEngine(uvPath, {
+          signal: controller.signal,
+          onData: (chunk) => {
+            log(chunk.trimEnd());
+            const line = chunk.split(/\r?\n/).map((l) => l.trim()).filter(Boolean).pop();
+            if (line) {
+              progress.report({ message: line.slice(0, 80) });
+            }
+          },
+        });
+        log("engine upgraded.");
+        return true;
+      } catch (err) {
+        logError("engine upgrade failed (will retry next activation)", err);
+        return false;
+      }
+    }
+  );
+}
+
+/**
+ * Install the local-sf-architect Agent Skill into the open workspace so Salesforce
+ * requests reliably route through the engine's MCP tools. Best-effort: a failure
+ * never blocks setup. Returns true if the skill was installed.
+ */
+export async function installSkillIntoWorkspace(uvPath: string): Promise<boolean> {
+  const folder = vscode.workspace.workspaceFolders?.[0];
+  if (!folder) {
+    log("installSkillIntoWorkspace: no folder open; skipping skill install.");
+    return false;
+  }
+  try {
+    const code = await runCli(uvPath, ["install-skill", folder.uri.fsPath], {
+      onData: (c) => log(c.trimEnd()),
+    });
+    if (code === 0) {
+      log("agent skill installed into workspace.");
+      return true;
+    }
+    logError(`install-skill exited ${code}`);
+    return false;
+  } catch (err) {
+    logError("install-skill failed to run", err);
+    return false;
+  }
+}
+
 /** Drop and rebuild the local stores (recovery path after a schema change). */
 export async function rebuildStores(uvPath: string): Promise<boolean> {
   return vscode.window.withProgress(

@@ -147,6 +147,39 @@ def score(path: str) -> None:
     click.echo(f"risk_score: {result['risk_score']}")
 
 
+@main.command(name="install-skill")
+@click.argument("path", type=click.Path(file_okay=False), default=".")
+@click.option(
+    "--agents",
+    default="cursor,claude,vibes",
+    help="Comma-separated agents to install the skill for (cursor,claude,vibes).",
+)
+@click.option(
+    "--no-persona",
+    is_flag=True,
+    help="Skip writing the always-on architect rule + AGENTS.md.",
+)
+def install_skill_cmd(path: str, agents: str, no_persona: bool) -> None:
+    """Install the local-sf-architect Agent Skill into PATH (default: current dir).
+
+    Copies the skill into each agent's skills directory and (unless --no-persona)
+    writes an always-on rule so Salesforce requests route through the engine's tools.
+    """
+    from sf_architect.memory.persona import install_skill
+
+    written = install_skill(
+        path,
+        agents=tuple(a.strip() for a in agents.split(",") if a.strip()),
+        with_persona=not no_persona,
+    )
+    if not written:
+        click.echo("Nothing installed (no valid agents specified).")
+        raise SystemExit(1)
+    for name, dest in written.items():
+        click.echo(f"{name}: {dest}")
+    click.echo("Skill installed. Restart your agent if it was already running.")
+
+
 @main.command()
 @click.argument("path", type=click.Path(exists=True), default=".")
 def lint(path: str) -> None:

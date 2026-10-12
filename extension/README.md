@@ -27,6 +27,11 @@ wires it into whichever AI agent you use:
 2. Installs the engine: `uv tool install --upgrade sf-local-architect`.
 3. Downloads the embedding model and seeds the local knowledge base.
 4. Wires the engine into every detected agent (existing configs are backed up).
+5. Installs the `local-sf-architect` Agent Skill into the workspace so your agent
+   reliably routes Salesforce questions through the engine's tools.
+
+After an extension update, existing installs automatically upgrade the engine and
+refresh the skill once per release — no manual steps needed.
 
 After setup, open your AI chat in **Agent mode** and ask questions like:
 

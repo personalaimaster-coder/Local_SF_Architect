@@ -7,13 +7,20 @@ import {
   installEngineWithProgress,
   runFirstRunSetup,
   rebuildStores,
+  installSkillIntoWorkspace,
+  upgradeEngineQuietly,
 } from "./setup";
 import { registerMcpProvider, refreshVsCodeMcp, writeWorkspaceMcpJson } from "./wiring/vscode";
 import { configureCursor } from "./wiring/cursor";
 import { configureClaudeCode } from "./wiring/claudeCode";
 import { initStatusBar, setState } from "./statusBar";
 import { log, logError, show as showLogs } from "./log";
-import { EXTENSION_ID, STATE_INSTALL_PROMPTED, STATE_SETUP_COMPLETE } from "./constants";
+import {
+  EXTENSION_ID,
+  STATE_INSTALL_PROMPTED,
+  STATE_RELEASE_SYNCED,
+  STATE_SETUP_COMPLETE,
+} from "./constants";
 
 let providerRegistered = false;
 
@@ -46,6 +53,10 @@ export function activate(context: vscode.ExtensionContext): void {
   if (config().get<boolean>("autoSetupOnActivate", true)) {
     void maybeAutoSetup(context);
   }
+
+  // Existing installs: after an extension update, upgrade the engine and refresh the
+  // skill once per release so users get new capabilities without manual steps.
+  void maybeSyncForNewRelease(context);
 }
 
 export function deactivate(): void {
@@ -109,6 +120,67 @@ async function maybeAutoSetup(context: vscode.ExtensionContext): Promise<void> {
   }
 }
 
+/** The extension version this build reports. */
+function extensionVersion(context: vscode.ExtensionContext): string {
+  return (context.extension.packageJSON as { version?: string }).version ?? "0.0.0";
+}
+
+/** Record that the engine + skill are current for this extension release. */
+function markReleaseSynced(context: vscode.ExtensionContext): Thenable<void> {
+  return context.globalState.update(STATE_RELEASE_SYNCED, extensionVersion(context));
+}
+
+/** True if the open workspace looks like a Salesforce DX project. */
+async function workspaceIsSalesforce(): Promise<boolean> {
+  if (!vscode.workspace.workspaceFolders?.length) {
+    return false;
+  }
+  const hits = await vscode.workspace.findFiles(
+    "**/sfdx-project.json",
+    "**/node_modules/**",
+    1
+  );
+  return hits.length > 0;
+}
+
+/**
+ * Catch-up sync for existing installs after an extension update: upgrade the engine
+ * to the latest PyPI release and refresh the skill into an open Salesforce workspace,
+ * at most once per extension version. Brand-new installs are handled by the normal
+ * setup flow, so this no-ops until the user has been set up at least once.
+ */
+async function maybeSyncForNewRelease(context: vscode.ExtensionContext): Promise<void> {
+  const version = extensionVersion(context);
+  if (context.globalState.get<string>(STATE_RELEASE_SYNCED) === version) {
+    return; // already synced for this release
+  }
+  if (!context.globalState.get<boolean>(STATE_INSTALL_PROMPTED)) {
+    return; // never set up yet — leave it to maybeAutoSetup / manual setup
+  }
+
+  const uv = await findUv();
+  if (!uv) {
+    return;
+  }
+  const { isEngineInstalled } = await import("./engine");
+  if (!(await isEngineInstalled(uv))) {
+    return; // not installed yet — the normal flow will install the latest
+  }
+
+  log(`extension ${version}: syncing engine + skill for existing install.`);
+  setState("installing");
+  const upgraded = await upgradeEngineQuietly(uv);
+  refreshVsCodeMcp();
+  if (await workspaceIsSalesforce()) {
+    await installSkillIntoWorkspace(uv);
+  }
+  await reflectInstalledState();
+  if (upgraded) {
+    // Only mark synced on success so an offline user retries on the next activation.
+    await markReleaseSynced(context);
+  }
+}
+
 async function runFullSetup(context: vscode.ExtensionContext): Promise<void> {
   setState("installing");
   const uv = await ensureUv();
@@ -134,6 +206,7 @@ async function runFullSetup(context: vscode.ExtensionContext): Promise<void> {
   if (!config().get<boolean>("autoConfigureAgents", true)) {
     refreshVsCodeMcp();
     setState("ready");
+    await markReleaseSynced(context);
     const pick = await vscode.window.showInformationMessage(
       "Local SF Architect engine is ready. Auto-configure is disabled — wire it into your agents when ready.",
       "Configure All Agents"
@@ -145,8 +218,10 @@ async function runFullSetup(context: vscode.ExtensionContext): Promise<void> {
   }
 
   const agents = await configureDetectedAgents();
+  await installSkillIntoWorkspace(uv);
   refreshVsCodeMcp();
   setState("ready", agents);
+  await markReleaseSynced(context);
   vscode.window.showInformationMessage(
     agents.length
       ? `Local SF Architect is ready and wired to: ${agents.join(", ")}.`
@@ -231,6 +306,10 @@ async function applyAgentConfig(isCursor: boolean, agents: AgentDetection): Prom
 
 async function configureAllCommand(): Promise<void> {
   const agents = await configureDetectedAgents();
+  const uv = await findUv();
+  if (uv) {
+    await installSkillIntoWorkspace(uv);
+  }
   refreshVsCodeMcp();
   if (agents.length) {
     setState("ready", agents);

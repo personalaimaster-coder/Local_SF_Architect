@@ -1,6 +1,6 @@
 [project]
 name = "sf-local-architect"
-version = "0.2.1"
+version = "0.3.0"
 description = "Local offline Salesforce architect MCP server for Cursor and Claude Code"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -44,6 +44,7 @@ include = [
     "/src",
     "/data/limits_seed.yaml",
     "/data/patterns_seed.yaml",
+    "/skills",
     "/tests",
     "/README.md",
     "/LICENSE",
@@ -59,6 +60,10 @@ packages = ["src/sf_architect"]
 [tool.hatch.build.targets.wheel.force-include]
 "data/limits_seed.yaml" = "sf_architect/data/limits_seed.yaml"
 "data/patterns_seed.yaml" = "sf_architect/data/patterns_seed.yaml"
+# Ship the bundled Agent Skill inside the wheel so `sf-architect install-skill`
+# works for users who install from PyPI and never clone the repo.
+"skills/local-sf-architect/SKILL.md" = "sf_architect/skills/local-sf-architect/SKILL.md"
+"skills/local-sf-architect/references/tools.md" = "sf_architect/skills/local-sf-architect/references/tools.md"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
