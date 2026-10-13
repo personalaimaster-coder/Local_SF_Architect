@@ -46,9 +46,14 @@ jobs:
 
   publish:
     # Publish to both registries when an ext-v* tag is pushed.
+    # The VS Code Marketplace step is skipped automatically when VSCE_PAT
+    # is not configured, so Open VSX (used by Cursor) still publishes.
     needs: build
     if: startsWith(github.ref, 'refs/tags/ext-v')
     runs-on: ubuntu-latest
+    env:
+      VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      OVSX_PAT: ${{ secrets.OVSX_PAT }}
     steps:
       - uses: actions/checkout@v4
 
@@ -61,12 +66,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build
+        run: npm run package
+
       - name: Publish to VS Code Marketplace
+        if: ${{ env.VSCE_PAT != '' }}
         run: npm run publish:vsce
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
       - name: Publish to Open VSX (for Cursor)
         run: npm run publish:ovsx
-        env:
-          OVSX_PAT: ${{ secrets.OVSX_PAT }}
