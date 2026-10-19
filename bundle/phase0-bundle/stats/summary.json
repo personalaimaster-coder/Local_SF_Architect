@@ -1,0 +1,211 @@
+{
+  "sessions": {
+    "total": 127,
+    "cursor": 124,
+    "claude_code": 3,
+    "total_est_tokens_visible": 2063688,
+    "total_tool_calls": 7187,
+    "total_sf_commands": 542,
+    "total_deploy_retries": 295,
+    "total_self_truncations": 2124
+  },
+  "tool_call_families": {
+    "tool:Read": {
+      "calls": 2230,
+      "args_est_tokens": 72700,
+      "result_est_tokens_claude": 11386
+    },
+    "tool:Grep": {
+      "calls": 1257,
+      "args_est_tokens": 47489,
+      "result_est_tokens_claude": null
+    },
+    "tool:StrReplace": {
+      "calls": 731,
+      "args_est_tokens": 334741,
+      "result_est_tokens_claude": null
+    },
+    "tool:Glob": {
+      "calls": 682,
+      "args_est_tokens": 15112,
+      "result_est_tokens_claude": null
+    },
+    "grep/find/cat": {
+      "calls": 422,
+      "args_est_tokens": 37330,
+      "result_est_tokens_claude": 6972
+    },
+    "sf-deploy": {
+      "calls": 325,
+      "args_est_tokens": 42364,
+      "result_est_tokens_claude": null
+    },
+    "git": {
+      "calls": 313,
+      "args_est_tokens": 22963,
+      "result_est_tokens_claude": 99
+    },
+    "tool:TodoWrite": {
+      "calls": 259,
+      "args_est_tokens": 20109,
+      "result_est_tokens_claude": null
+    },
+    "tool:Write": {
+      "calls": 180,
+      "args_est_tokens": 221417,
+      "result_est_tokens_claude": null
+    },
+    "other": {
+      "calls": 150,
+      "args_est_tokens": 14715,
+      "result_est_tokens_claude": 170
+    },
+    "tool:UpdateCurrentStep": {
+      "calls": 109,
+      "args_est_tokens": 7199,
+      "result_est_tokens_claude": null
+    },
+    "sf-other": {
+      "calls": 81,
+      "args_est_tokens": 6903,
+      "result_est_tokens_claude": null
+    },
+    "sf-org": {
+      "calls": 72,
+      "args_est_tokens": 4304,
+      "result_est_tokens_claude": null
+    },
+    "tool:ReadLints": {
+      "calls": 53,
+      "args_est_tokens": 2730,
+      "result_est_tokens_claude": null
+    },
+    "tool:CallMcpTool": {
+      "calls": 42,
+      "args_est_tokens": 5708,
+      "result_est_tokens_claude": null
+    },
+    "sf-apex-test": {
+      "calls": 40,
+      "args_est_tokens": 3864,
+      "result_est_tokens_claude": null
+    },
+    "tool:Task": {
+      "calls": 38,
+      "args_est_tokens": 9533,
+      "result_est_tokens_claude": null
+    },
+    "tool:AskQuestion": {
+      "calls": 33,
+      "args_est_tokens": 7592,
+      "result_est_tokens_claude": null
+    },
+    "tool:CreatePlan": {
+      "calls": 28,
+      "args_est_tokens": 41938,
+      "result_est_tokens_claude": null
+    },
+    "tool:Delete": {
+      "calls": 28,
+      "args_est_tokens": 862,
+      "result_est_tokens_claude": null
+    },
+    "tool:GetMcpTools": {
+      "calls": 25,
+      "args_est_tokens": 373,
+      "result_est_tokens_claude": null
+    },
+    "tool:WebSearch": {
+      "calls": 24,
+      "args_est_tokens": 1274,
+      "result_est_tokens_claude": null
+    },
+    "sf-data-query": {
+      "calls": 24,
+      "args_est_tokens": 3185,
+      "result_est_tokens_claude": null
+    },
+    "tool:AwaitShell": {
+      "calls": 18,
+      "args_est_tokens": 341,
+      "result_est_tokens_claude": null
+    },
+    "tool:SemanticSearch": {
+      "calls": 13,
+      "args_est_tokens": 488,
+      "result_est_tokens_claude": null
+    },
+    "tool:WebFetch": {
+      "calls": 10,
+      "args_est_tokens": 256,
+      "result_est_tokens_claude": null
+    }
+  },
+  "claude_code_usage": {
+    "turns": 24,
+    "input_tokens": 124,
+    "cache_creation_input_tokens": 87774,
+    "cache_read_input_tokens": 749412,
+    "output_tokens": 7966,
+    "cache_hit_rate": 0.895
+  },
+  "compressibility": {
+    "sf-org": {
+      "files": 3,
+      "raw_tokens": 51331,
+      "filtered_tokens": 563,
+      "ratio_kept": 0.011,
+      "pct_reduction": 98.9
+    },
+    "sf-retrieve-preview": {
+      "files": 1,
+      "raw_tokens": 214168,
+      "filtered_tokens": 1260,
+      "ratio_kept": 0.006,
+      "pct_reduction": 99.4
+    },
+    "sf-apex-test": {
+      "files": 1,
+      "raw_tokens": 13594,
+      "filtered_tokens": 13350,
+      "ratio_kept": 0.982,
+      "pct_reduction": 1.8
+    },
+    "sf-json": {
+      "files": 3,
+      "raw_tokens": 175664,
+      "filtered_tokens": 118792,
+      "csv_tokens": 7246,
+      "ratio_kept": 0.676,
+      "pct_reduction": 32.4
+    },
+    "sf-deploy/validate": {
+      "files": 1,
+      "raw_tokens": 176,
+      "filtered_tokens": 31,
+      "ratio_kept": 0.176,
+      "pct_reduction": 82.4
+    },
+    "git": {
+      "files": 2,
+      "raw_tokens": 17246,
+      "filtered_tokens": 16811,
+      "ratio_kept": 0.975,
+      "pct_reduction": 2.5
+    },
+    "npm": {
+      "files": 1,
+      "raw_tokens": 7785,
+      "filtered_tokens": 7784,
+      "ratio_kept": 1.0,
+      "pct_reduction": 0.0
+    },
+    "debug-log": {
+      "files": 3,
+      "raw_tokens": 5490299,
+      "filtered_tokens": 36494,
+      "ratio_kept": 0.007,
+      "pct_reduction": 99.3
+    }
+  }
+}

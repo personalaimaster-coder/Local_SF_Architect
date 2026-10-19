@@ -52,8 +52,11 @@ def test_install_skill_copies_skill_and_writes_persona(tmp_path) -> None:
 def test_install_skill_selected_agents_and_no_persona(tmp_path) -> None:
     written = install_skill(tmp_path, agents=("cursor",), with_persona=False)
 
-    assert set(written) == {"cursor"}
+    # The architect skill plus the bundled sf-compress companion skill are both
+    # installed for the selected agent (integrated installer); no persona files.
+    assert set(written) == {"cursor", "cursor:sf-compress"}
     assert (tmp_path / ".cursor" / "skills" / "local-sf-architect" / "SKILL.md").exists()
+    assert (tmp_path / ".cursor" / "skills" / "sf-compress" / "SKILL.md").exists()
     assert not (tmp_path / ".claude").exists()
     assert not (tmp_path / "AGENTS.md").exists()
 

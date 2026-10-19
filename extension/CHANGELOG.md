@@ -1,5 +1,21 @@
 # Change Log
 
+## 0.3.0
+
+- Bundles the **sf-compress** (`sfc`) dev-support compressor into the single
+  `sf-local-architect` engine. The unified MCP server now also exposes
+  `sfc_status` / `sfc_on` / `sfc_off` / `sfc_run` / `sfc_show` / `sfc_stats` /
+  `sfc_graph`, a `sf-architect compress …` CLI passthrough, a standalone `sfc`
+  console script, and the `sf-compress` Agent Skill (installed alongside
+  `local-sf-architect` during setup). Pairs with engine 0.4.0 on PyPI.
+- **sfc is now ON by default** — dev-support output compression works out of the
+  box; run `sfc off` (or the `sfc_off` tool) to make it fully dormant per project.
+- Existing installs: on activation after this extension update, the catch-up sync
+  upgrades the engine (`uv tool install --upgrade`) once per release and refreshes
+  the skills into an open Salesforce workspace. Reload the editor afterward so the
+  MCP server restarts and surfaces the new `sfc_*` tools. No knowledge-base rebuild
+  or data migration is required.
+
 ## 0.2.0
 
 - Installs the bundled `local-sf-architect` Agent Skill into detected agents

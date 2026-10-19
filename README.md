@@ -265,6 +265,15 @@ Once the MCP server is running in Cursor, the AI has access to these tools. You 
 | `set_deliverable_preference` | Persist your preferred diagram format (Mermaid or draw.io) | *"Always generate draw.io diagrams from now on"* |
 | `score_architecture` | Six-pillar scorecard + risk score with explanations | *"Score the architecture health of this project"* |
 | `sync_latest_patterns` | Scrape an allowlisted docs URL and store new patterns | *"Learn the patterns from this Salesforce docs page: <url>"* |
+| `sfc_status` / `sfc_on` / `sfc_off` | Check / change the bundled sf-compress dev-support activation (ON by default) | *"Turn off sfc while I review this design"* |
+| `sfc_run` | Run a Salesforce dev command through the compressor; stores full output, returns the compressed view | *"Deploy force-app and show me only the errors"* |
+| `sfc_show` | Expand a stored full output by id (narrow with grep/head/tail) | *"Show the full deploy report for id 2026..."* |
+| `sfc_stats` / `sfc_graph` | Token savings per family / query the offline code graph | *"How many tokens did sfc save?"* |
+
+> The `sfc_*` tools come from the **bundled sf-compress compressor** (see the next
+> section). They are ON by default and scoped to dev-support loops only; run
+> `sfc off` during analysis/design work, where the architecture tools above (which
+> need full detail) are the right choice.
 
 Every tool returns a common envelope:
 
@@ -278,6 +287,43 @@ Every tool returns a common envelope:
   "error": null
 }
 ```
+
+---
+
+## Dev-support compression (bundled sf-compress / `sfc`)
+
+This engine bundles **[sf-compress](docs/sf-compress.md)** — a context/token
+optimizer for the *dev-support* loop. Verbose Salesforce CLI output (deploy
+reports, `retrieve preview` tables, `--json` payloads, Apex debug logs) is highly
+compressible; `sfc` wraps your `sf` commands, stores the **full** raw output on
+disk, and returns a compressed view (errors, failures, summaries, counts) so a
+200k-token report doesn't flood the agent's context. Nothing is lost — every
+output ends with an id you can expand on demand (`sfc show <id>`).
+
+It is exposed three ways, all through this one package/extension:
+
+- **CLI:** `sfc <args>` (standalone) or `sf-architect compress <args>` (alias).
+- **MCP tools:** `sfc_status / sfc_on / sfc_off / sfc_run / sfc_show / sfc_stats /
+  sfc_graph` on the same `sf-local-architect` server.
+- **Agent Skill:** `sf-architect install-skill` installs the `sf-compress` skill
+  alongside `local-sf-architect`.
+
+**Scope + defaults.** `sfc` is **ON by default** and strictly a dev-support tool
+(deploy/validate, test runs, debug logs, retrieve/preview, data queries). It must
+**not** run during analysis/architecture work — full detail matters there, which
+is this engine's core job, so run `sfc off` for those loops. State is project-local
+under `.sfc/` (git-ignored); `sfc off` writes an explicit opt-out for a project.
+
+> **Security posture note.** `sfc` gives the agent the ability to execute
+> `sf`/shell **subprocesses** via `sfc_run`, and it is active by default. This is a
+> deliberate capability on an engine that is otherwise fully offline and
+> side-effect-free; it changes the process-execution surface (not the network
+> posture — the no-outbound-network guarantee is unchanged). Run `sfc off` to make
+> it fully dormant (`sfc run` then refuses to execute).
+
+See **[docs/sf-compress.md](docs/sf-compress.md)** for the full command reference,
+filters, deltas, the exploration graph, and the org workbench; design notes live in
+[`MEMORY.md`](MEMORY.md).
 
 ---
 
