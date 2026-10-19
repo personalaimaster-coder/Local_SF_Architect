@@ -1,6 +1,6 @@
 [project]
 name = "sf-local-architect"
-version = "0.3.0"
+version = "0.4.0"
 description = "Local offline Salesforce architect MCP server for Cursor and Claude Code"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -19,10 +19,14 @@ dependencies = [
 
 [project.optional-dependencies]
 scrape = ["crawl4ai>=0.8"]
+# Bundled sf-compress (sfc) exploration-graph extra; opt-in (needs Python 3.10+).
+graph = ["graphify-sf==0.4.1"]
 
 [project.scripts]
 sf-architect = "sf_architect.cli:main"
 sf-architect-mcp = "sf_architect.server:main"
+# Bundled sf-compress dev-support CLI.
+sfc = "sfc.cli:main"
 
 [dependency-groups]
 dev = [
@@ -52,7 +56,7 @@ include = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/sf_architect"]
+packages = ["src/sf_architect", "src/sfc"]
 
 # Ship the curated seed data inside the wheel so `sf-architect seed` works for
 # users who install from PyPI (e.g. via `uv tool install` / `uvx`) and never
@@ -72,6 +76,21 @@ pythonpath = ["src"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+# The bundled sf-compress (sfc) package and its tests are merged verbatim from an
+# upstream project with its own style; exclude them from the engine's lint so we
+# hold engine-authored code to the engine standard without diverging from upstream.
+extend-exclude = [
+    "src/sfc",
+    "bundle",
+    "tests/synth.py",
+    "tests/test_cli.py",
+    "tests/test_delta.py",
+    "tests/test_filters.py",
+    "tests/test_graph.py",
+    "tests/test_mcp_server.py",
+    "tests/test_setup.py",
+    "tests/test_workbench.py",
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]

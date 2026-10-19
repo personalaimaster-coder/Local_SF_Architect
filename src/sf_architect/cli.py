@@ -198,5 +198,21 @@ def lint(path: str) -> None:
     click.echo("No architectural infractions found.")
 
 
+@main.command(
+    context_settings=dict(ignore_unknown_options=True, allow_extra_args=True),
+    add_help_option=False,  # forward --help to sfc's own parser
+)
+@click.argument("args", nargs=-1, type=click.UNPROCESSED)
+def compress(args: tuple[str, ...]) -> None:
+    """Run the bundled sf-compress (sfc) dev-support compressor.
+
+    Thin passthrough: ``sf-architect compress <args>`` == ``sfc <args>``.
+    Example: sf-architect compress run -- sf project deploy start -d force-app
+    """
+    from sfc.cli import main as sfc_main
+
+    raise SystemExit(sfc_main(list(args)))
+
+
 if __name__ == "__main__":
     main()

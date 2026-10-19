@@ -13,6 +13,9 @@ build/
 # Local runtime state (lives in ~/.sf-architect/)
 .sf-architect/
 
+# sf-compress (sfc) project-local dev-support state
+.sfc/
+
 # Model / download caches
 .cache/
 fastembed_cache/

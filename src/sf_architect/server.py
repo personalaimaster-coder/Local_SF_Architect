@@ -244,6 +244,103 @@ def sync_latest_patterns(url: str, force: bool = False) -> dict[str, Any]:
     return ok(tool, data, warnings=warnings)
 
 
+# --------------------------------------------------------------------------- #
+# sf-compress (sfc) dev-support tools
+# --------------------------------------------------------------------------- #
+# Delegate to the bundled sfc compressor (src/sfc) so this single
+# sf-local-architect MCP server covers both architecture analysis and dev-support
+# output compression. sfc is ON by default and project-local. Setup/skill-install
+# are intentionally NOT exposed here (handled by `sf-architect install-skill`),
+# which avoids sfc registering a competing second MCP server.
+
+
+def _sfc_text(result: dict) -> str:
+    """Flatten an sfc MCP result ({"content": [{"text": ...}], "isError": ...}) to text."""
+    parts = [
+        c.get("text", "")
+        for c in (result.get("content") or [])
+        if isinstance(c, dict)
+    ]
+    return "\n".join(p for p in parts if p) or "(no output)"
+
+
+@mcp.tool
+@audited
+def sfc_status() -> str:
+    """Report whether the sfc compressor is ACTIVE or OFF for this project."""
+    from sfc.mcp_server import _t_status
+
+    return _sfc_text(_t_status({}))
+
+
+@mcp.tool
+@audited
+def sfc_on() -> str:
+    """Activate sfc for dev-support work (deploy/test/debug-log/retrieve/query)."""
+    from sfc.mcp_server import _t_on
+
+    return _sfc_text(_t_on({}))
+
+
+@mcp.tool
+@audited
+def sfc_off() -> str:
+    """Deactivate sfc (fully dormant). Use when leaving dev-support work."""
+    from sfc.mcp_server import _t_off
+
+    return _sfc_text(_t_off({}))
+
+
+@mcp.tool
+@audited
+def sfc_run(command: list[str] | str) -> str:
+    """Run a Salesforce dev command through the compressor and return the compressed
+    view (full raw output is stored on disk; expand it later with sfc_show)."""
+    from sfc.mcp_server import _t_run
+
+    return _sfc_text(_t_run({"command": command}))
+
+
+@mcp.tool
+@audited
+def sfc_show(
+    id: str,
+    grep: str | None = None,
+    head: int | None = None,
+    tail: int | None = None,
+) -> str:
+    """Expand a stored full raw output by id; narrow with grep/head/tail."""
+    from sfc.mcp_server import _t_show
+
+    args: dict[str, Any] = {"id": id}
+    if grep is not None:
+        args["grep"] = grep
+    if head is not None:
+        args["head"] = head
+    if tail is not None:
+        args["tail"] = tail
+    return _sfc_text(_t_show(args))
+
+
+@mcp.tool
+@audited
+def sfc_stats() -> str:
+    """Token savings per command family (raw vs emitted)."""
+    from sfc.mcp_server import _t_stats
+
+    return _sfc_text(_t_stats({}))
+
+
+@mcp.tool
+@audited
+def sfc_graph(args: list[str] | str) -> str:
+    """Query the graphify-sf code graph to locate code/dependencies (needs the
+    exploration-graph toggle). A first-pass locator — verify callers in source."""
+    from sfc.mcp_server import _t_graph
+
+    return _sfc_text(_t_graph({"args": args}))
+
+
 def main() -> None:
     ensure_data_dirs()
     mcp.run()

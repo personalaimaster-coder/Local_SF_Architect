@@ -1,0 +1,42 @@
+{
+  "phase": "0 - data collection",
+  "generated_at_utc": "2026-09-04T12:12:37Z",
+  "machine": {
+    "hostname": "REDACTED",
+    "os": "macOS (darwin arm64)"
+  },
+  "tool_versions": {
+    "salesforce_cli": "@salesforce/cli/2.137.7 (node-v22.22.3)",
+    "node": "v26.3.0",
+    "npm": "11.16.0",
+    "python": "3.9.6"
+  },
+  "salesforce_project": {
+    "path": "REDACTED",
+    "name": "REDACTED (large multi-package Salesforce project; used only as a Phase 0 data source, not retained)",
+    "sourceApiVersion": "64.0",
+    "package_dirs": [
+      "<soql-library>/force-app/main/default/classes/main/standard-soql",
+      "<pkg-1>",
+      "<pkg-2>/ALL",
+      "<pkg-2>/ESIGNSDK",
+      "<pkg-2>/LATEST (default)"
+    ],
+    "default_target_org": "REDACTED"
+  },
+  "collected": {
+    "transcripts": {
+      "cursor_jsonl": 124,
+      "claude_code_jsonl": 3,
+      "note": "Cursor transcripts do NOT persist tool results; Claude Code transcripts include tool results + billed usage/cache splits."
+    },
+    "corpus": {
+      "sf_outputs": 12,
+      "debug_logs": 0,
+      "metadata_samples": 1
+    },
+    "stats": ["sessions.csv", "tool_calls.csv", "claude_turns.csv", "summary.json"]
+  },
+  "how_to_rerun": "python3 analyze.py  (reads transcripts/ and corpus/ under this bundle, rewrites stats/ and corpus/index.csv)",
+  "privacy": "Bundle may contain code/log/metadata snippets and org usernames/IDs. Review corpus/ and transcripts/ before sharing off-machine."
+}

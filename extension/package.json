@@ -1,8 +1,8 @@
 {
   "name": "sf-local-architect",
   "displayName": "Local SF Architect",
-  "description": "One-click install and setup of the Local Salesforce Architect MCP engine for GitHub Copilot, Cursor, and Claude Code. Fully local, offline Salesforce architecture tooling.",
-  "version": "0.2.0",
+  "description": "One-click install and setup of the Local Salesforce Architect MCP engine for GitHub Copilot, Cursor, and Claude Code. Fully local, offline Salesforce architecture tooling, plus the bundled sf-compress dev-support compressor that slashes the tokens verbose `sf` CLI output (deploys, tests, debug logs, SOQL) spends in your agent's context.",
+  "version": "0.3.0",
   "publisher": "sf-local-architect",
   "license": "Apache-2.0",
   "engines": {
@@ -20,7 +20,12 @@
     "cursor",
     "claude code",
     "architecture",
-    "governor limits"
+    "governor limits",
+    "sf-compress",
+    "sfc",
+    "token optimization",
+    "context compression",
+    "sf cli"
   ],
   "icon": "media/icon.png",
   "repository": {

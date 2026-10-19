@@ -147,6 +147,19 @@ def install_skill(
         shutil.copytree(source, target)
         written[agent] = str(target)
 
+        # Also install the bundled sf-compress (sfc) dev-support skill into the
+        # same agent dir, using sfc's own packaged-asset loader (works from a
+        # wheel or a source checkout). No MCP re-registration: the sfc tools are
+        # served by this engine's unified sf-architect-mcp server. Best-effort:
+        # a failure here must never break the architect skill install.
+        try:
+            from sfc import agents as _sfc_agents
+
+            sfc_dest = _sfc_agents.install_skill(repo_root, str(rel))
+            written[f"{agent}:sf-compress"] = str(sfc_dest)
+        except Exception:
+            pass
+
     if with_persona:
         written.update(write_persona(repo_root, consent=True))
 
